@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CID — Grupos Criminales</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet" />
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="css/map.css" />
+  <link rel="icon" type="image/png" href="assets/logos/logo.png" />
+</head>
+
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <nav class="cid-nav">
+        <ul class="cid-nav__links">
+          <li class="cid-nav__link">
+            <a href="index.html">Inicio</a>
+          </li>
+          <li class="cid-nav__link">
+            <a href="identification.html">Identificación Criminal</a>
+          </li>
+          <li class="cid-nav__link active">
+            <a href="map.html">Mapa Criminal</a>
+          </li>
+
+          <span class="cid-nav__light"></span>
+        </ul>
+      </nav>
+    </header>
+
+    <main class="map-layout">
+      <aside class="sidebar">
+        <div class="sidebar-block">
+          <h2>Grupos Criminales</h2>
+          <p>Gestión de zonas criminales sobre el mapa.</p>
+        </div>
+
+        <div class="sidebar-block form-block">
+          <h3>Crear grupo</h3>
+
+          <label for="orgName">Nombre</label>
+          <input type="text" id="orgName" placeholder="Ej. No Mercy" />
+
+          <label for="primaryColor">Color principal</label>
+          <input type="color" id="primaryColor" value="#2A6BFF" />
+
+          <label for="secondaryColor">Color secundario</label>
+          <input type="color" id="secondaryColor" value="#B4CDD6" />
+
+          <div class="actions-block">
+            <button id="drawModeBtn" type="button">Definir zona</button>
+            <button id="undoPointBtn" type="button">Deshacer punto</button>
+            <button id="clearDraftBtn" type="button">Limpiar puntos</button>
+            <button id="saveOrgBtn" type="button">Guardar grupo</button>
+          </div>
+        </div>
+
+        <div class="sidebar-block tool-block">
+          <div class="tool-block__header">
+            <h3>Elementos del grupo</h3>
+            <span id="selectedOrgName" class="selected-org-name">Ninguno seleccionado</span>
+          </div>
+
+          <p class="tool-block__hint">
+            Selecciona un grupo guardado y luego elige qué quieres añadir al mapa.
+          </p>
+
+          <div class="extra-actions">
+            <button id="addGraffitiBtn" type="button" class="icon-action-btn">
+              <span>🎨</span>
+              <span>Grafiti</span>
+            </button>
+            <button id="addPlantationBtn" type="button" class="icon-action-btn">
+              <span>🌿</span>
+              <span>Plantación</span>
+            </button>
+            <button id="addPoiBtn" type="button" class="icon-action-btn">
+              <span>ℹ️</span>
+              <span>Punto de interés</span>
+            </button>
+            <button id="addStorageBtn" type="button" class="icon-action-btn">
+              <span>📦</span>
+              <span>Almacén</span>
+            </button>
+            <button id="addSalesBtn" type="button" class="icon-action-btn">
+              <span>🫱🏾‍🫲🏿</span>
+              <span>Punto de venta</span>
+            </button>
+          </div>
+
+          <button id="cancelModeBtn" type="button" class="secondary-outline-btn">
+            Cancelar modo
+          </button>
+
+          <div id="modeStatus" class="mode-status">
+            No hay ningún modo activo.
+          </div>
+        </div>
+      </aside>
+
+      <section class="map-panel">
+        <div class="map-panel__header">
+          <div>
+            <div class="map-panel__eyebrow">CID</div>
+            <h1>Mapa de Grupos Criminales</h1>
+          </div>
+
+          <div class="map-panel__actions">
+            <div class="map-style-switcher" aria-label="Cambiar estilo del mapa">
+              <button id="mapStyleSatelliteBtn" class="map-style-btn" type="button" title="Mapa satélite">
+                <span>🛰️</span>
+              </button>
+              <button id="mapStyleStreetsBtn" class="map-style-btn is-active" type="button" title="Mapa calles">
+                <span>🗺️</span>
+              </button>
+              <button id="mapStyleBWBtn" class="map-style-btn" type="button" title="Mapa blanco y negro">
+                <span>◻️</span>
+              </button>
+            </div>
+
+            <button id="fitMapBtn" class="fit-map-btn" type="button">
+              Ajustar mapa
+            </button>
+          </div>
+        </div>
+
+        <div id="map" class="map-canvas"></div>
+      </section>
+
+      <aside class="organizations-panel">
+        <div class="organizations-panel__inner">
+          <div class="organizations-panel__header">
+            <h3>Organizaciones guardadas</h3>
+            <p>Visualiza, selecciona y gestiona los grupos creados.</p>
+          </div>
+
+          <div id="organizationList" class="organization-list"></div>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <!-- MODAL ELIMINAR -->
+  <div id="deleteModal" class="modal hidden">
+    <div class="modal-content">
+      <button id="closeModal" class="modal-close">✖</button>
+
+      <h3>Eliminar elemento</h3>
+      <p id="modalText"></p>
+
+      <div class="modal-actions">
+        <button id="deleteOneBtn" class="danger-btn">Eliminar este elemento</button>
+        <button id="deleteAllBtn" class="danger-outline-btn">Eliminar todos</button>
+        <button id="cancelDeleteBtn" class="secondary-btn">No, me lo he pensado mejor</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script type="module" src="js/map.js"></script>
+</body>
+
+</html>

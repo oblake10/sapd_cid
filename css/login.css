@@ -1,0 +1,228 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --panel-bg: rgba(8, 10, 14, 0.92);
+  --panel-border: rgba(255, 255, 255, 0.08);
+  --input-bg: rgba(255, 255, 255, 0.04);
+  --input-border: rgba(255, 255, 255, 0.08);
+  --input-placeholder: #7c8591;
+  --text-main: #ffffff;
+  --text-muted: #98a0ac;
+  --text-soft: #8d96a2;
+  --text-faint: #6c7480;
+  --accent: #cceaf4;
+}
+
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  font-family: "Inter", sans-serif;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background-image: url("../assets/images/background.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  overflow: hidden;
+  position: relative;
+}
+
+body::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(5px);
+}
+
+.login-wrapper {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 4%;
+}
+
+.login-card {
+  display: grid;
+  grid-template-rows: auto auto auto auto;
+  gap: 1.2rem;
+  width: clamp(420px, 35vw, 700px);
+  max-width: 100%;
+  padding: clamp(30px, 4vw, 60px);
+  background: var(--panel-bg);
+  border-radius: 1.6rem;
+  border: 1px solid var(--panel-border);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+  color: var(--text-main);
+}
+
+.login-header {
+
+  display: grid;
+  justify-items: center;
+  gap: 0.8rem;
+
+}
+
+.login-logo {
+  width: clamp(70px, 6vw, 90px);
+  filter: drop-shadow(0 5px 10px rgba(0, 0, 0, .4));
+}
+
+/* fila CID + texto */
+
+.login-title-row {
+
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 0.8rem;
+  align-items: center;
+
+}
+
+.login-title {
+  font-size: clamp(2rem, 2.5vw, 2.8rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.login-sub {
+  font-size: clamp(0.9rem, 1vw, 1.1rem);
+  color: #98a0ac;
+}
+
+.form {
+  display: grid;
+  gap: 0.9rem;
+  margin-top: 0.6rem;
+}
+
+.input {
+  width: 100%;
+  padding: 1.1rem;
+  border-radius: 0.7rem;
+  border: 1px solid var(--input-border);
+  background: var(--input-bg);
+  color: var(--text-main);
+  font-size: 1.2rem;
+}
+
+.input::placeholder {
+  color: var(--input-placeholder);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 0.2rem rgba(204, 234, 244, 0.15);
+}
+
+.button {
+  width: 100%;
+  padding: 1.1rem;
+  border-radius: 0.7rem;
+  border: none;
+  background: var(--accent);
+  color: #000000;
+  font-weight: 700;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.button:hover {
+  opacity: 0.9;
+}
+
+.footer {
+  margin-top: 0.2rem;
+  font-size: 1.05rem;
+  color: var(--text-soft);
+  text-align: center;
+}
+
+.system {
+  font-size: 1.05rem;
+  color: var(--text-faint);
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .login-wrapper {
+    padding: 5%;
+  }
+
+  .login-card {
+    width: min(100%, 34rem);
+    padding: clamp(22px, 6vw, 36px);
+    border-radius: 1.25rem;
+  }
+
+  .input,
+  .button {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-card {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+.alert-floating {
+  position: fixed;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(90%, 520px);
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.alert-floating .alert {
+  pointer-events: auto;
+  margin: 0;
+  animation: slideXIn .28s ease;
+}
+
+.alert-floating .alert.alert-hide {
+  animation: slideXOut .28s ease forwards;
+}
+
+@keyframes slideXIn {
+  from {
+    opacity: 0;
+    transform: translateX(40px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideXOut {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateX(40px);
+  }
+}
