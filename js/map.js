@@ -79,6 +79,16 @@ const mapStyleSatelliteBtn = document.getElementById("mapStyleSatelliteBtn");
 const mapStyleStreetsBtn = document.getElementById("mapStyleStreetsBtn");
 const mapStyleBWBtn = document.getElementById("mapStyleBWBtn");
 
+const deleteGroupModal = document.getElementById("deleteGroupModal");
+const deleteGroupModalText = document.getElementById("deleteGroupModalText");
+const confirmDeleteGroupBtn = document.getElementById("confirmDeleteGroupBtn");
+const cancelDeleteGroupBtn = document.getElementById("cancelDeleteGroupBtn");
+const closeDeleteGroupModal = document.getElementById("closeDeleteGroupModal");
+
+const viewAllBtn = document.getElementById("viewAllBtn");
+
+let currentDeleteGroupId = null;
+
 let currentDeleteContext = null;
 
 let organizations = [];
@@ -111,6 +121,18 @@ function isPermissionError(error) {
     error?.message?.toLowerCase().includes("missing or insufficient permissions")
   );
 }
+
+function openDeleteGroupModal(org) {
+  currentDeleteGroupId = org.id;
+  deleteGroupModalText.textContent = `¿Deseas eliminar el grupo "${org.name}"? Esta acción no se puede deshacer.`;
+  deleteGroupModal.classList.remove("hidden");
+}
+
+function closeDeleteGroupModalFn() {
+  currentDeleteGroupId = null;
+  deleteGroupModal.classList.add("hidden");
+}
+
 
 function moveNavLight(linkElement) {
   if (!navLight || !linkElement || !linkElement.parentElement) return;
@@ -354,11 +376,11 @@ function createEmojiIcon(type) {
   const item = config[type];
 
   return L.divIcon({
-    className: "",
-    html: `<div class="${item.className}">${item.label}</div>`,
-    iconSize: [26, 26],
-    iconAnchor: [13, 13],
-    popupAnchor: [0, -10]
+    className: item.className,
+    html: item.label,
+    iconSize: [36, 36],
+    iconAnchor: [18, 18],
+    popupAnchor: [0, -16]
   });
 }
 
@@ -517,10 +539,16 @@ function renderOrganizations() {
       }).addTo(organizationsLayer);
 
       polygon.bindPopup(`
-        <strong>${org.name}</strong><br>
-        Principal: ${org.primaryColor}<br>
-        Secundario: ${org.secondaryColor}
-      `);
+  <strong>${org.name}</strong><br>
+  Principal: ${org.primaryColor}<br>
+  Secundario: ${org.secondaryColor}
+`);
+
+      polygon.bindTooltip(org.name, {
+        permanent: true,
+        direction: "center",
+        className: "zone-label"
+      });
     }
 
     const graffitiCount = Array.isArray(org.graffiti) ? org.graffiti.length : 0;
@@ -583,7 +611,7 @@ function renderOrganizations() {
     if (deleteBtn) {
       deleteBtn.addEventListener("click", (e) => {
         e.stopPropagation();
-        deleteOrganization(org.id);
+        openDeleteGroupModal(org);
       });
     }
 
@@ -863,7 +891,9 @@ function listenOrganizations() {
 
       if (isPermissionError(error)) {
         const currentUser = auth.currentUser;
-
+        console.log("Usuario actual:", auth.currentUser);
+        console.log("UID:", auth.currentUser?.uid);
+        console.log("Email:", auth.currentUser?.email);
         if (currentUser && !hasRetriedOrganizationsListener) {
           hasRetriedOrganizationsListener = true;
 
@@ -1037,6 +1067,16 @@ deleteAllBtn.onclick = async () => {
   closeDeleteModal();
 };
 
+closeDeleteGroupModal.onclick = closeDeleteGroupModalFn;
+cancelDeleteGroupBtn.onclick = closeDeleteGroupModalFn;
+
+confirmDeleteGroupBtn.onclick = async () => {
+  if (!currentDeleteGroupId) return;
+
+  await deleteOrganization(currentDeleteGroupId);
+  closeDeleteGroupModalFn();
+};
+
 function initPage() {
   if (pageInitialized) return;
   pageInitialized = true;
@@ -1052,6 +1092,41 @@ function initPage() {
   updateSelectedOrganizationUI();
   updateModeUI();
 }
+
+function showAllOrganizationsData() {
+  organizations.forEach((org) => {
+    visibilityState.zone[org.id] = true;
+    visibilityState.graffiti[org.id] = true;
+    visibilityState.plantations[org.id] = true;
+    visibilityState.pois[org.id] = true;
+    visibilityState.storage[org.id] = true;
+    visibilityState.sales[org.id] = true;
+  });
+
+  renderOrganizations();
+}
+
+viewAllBtn?.addEventListener("click", () => {
+  showAllOrganizationsData();
+});
+
+let allVisible = false;
+
+viewAllBtn?.addEventListener("click", () => {
+  allVisible = !allVisible;
+
+  organizations.forEach((org) => {
+    visibilityState.zone[org.id] = allVisible;
+    visibilityState.graffiti[org.id] = allVisible;
+    visibilityState.plantations[org.id] = allVisible;
+    visibilityState.pois[org.id] = allVisible;
+    visibilityState.storage[org.id] = allVisible;
+    visibilityState.sales[org.id] = allVisible;
+  });
+
+  renderOrganizations();
+});
+
 
 onAuthStateChanged(auth, (user) => {
   if (!user) {

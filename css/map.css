@@ -557,6 +557,19 @@ input {
   border: 1px solid rgba(150, 170, 230, 0.12);
 }
 
+.view-all-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+#viewAllBtn {
+  font-size: 22px;
+  min-width: 52px;
+  min-height: 46px;
+}
+
 .input-error {
   border: 1px solid var(--danger) !important;
   box-shadow: 0 0 0 1px rgba(255, 95, 109, 0.2);
@@ -569,20 +582,38 @@ input {
 }
 
 .extra-marker {
-  width: 26px;
-  height: 26px;
+  width: 36px;
+  height: 36px;
   border-radius: 999px;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: white;
-  font-size: 17px;
+  font-size: 22px;
   font-weight: 800;
   border: 2px solid rgba(255, 255, 255, 0.75);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28);
+  line-height: 1;
 }
 
 .extra-marker--graffiti {
   background: #8a4dff;
+}
+
+.extra-marker--plantation {
+  background: #2ac45f;
+}
+
+.extra-marker--poi {
+  background: #16a5ff;
+}
+
+.extra-marker--storage {
+  background: #c28b36;
+}
+
+.extra-marker--sales {
+  background: #ff6a3d;
 }
 
 .extra-marker--plantation {
@@ -781,4 +812,22 @@ input {
   .modal-content {
     width: min(92vw, 450px);
   }
+}
+
+.zone-label {
+  background: rgba(10, 16, 29, 0.555);
+  border: 1px solid rgba(177, 215, 218, 0.35);
+  color: #f3f7ff;
+  font-family: "Montserrat", sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  padding: 4px 10px;
+  border-radius: 999px;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.28);
+  text-align: center;
+}
+
+.zone-label::before {
+  display: none;
 }

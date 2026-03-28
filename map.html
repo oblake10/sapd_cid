@@ -129,6 +129,11 @@
             <button id="fitMapBtn" class="fit-map-btn" type="button">
               Ajustar mapa
             </button>
+            <div class="view-all-wrapper">
+              <button id="viewAllBtn" class="map-style-btn" title="Ver todo">
+                👀
+              </button>
+            </div>
           </div>
         </div>
 
@@ -160,6 +165,21 @@
         <button id="deleteOneBtn" class="danger-btn">Eliminar este elemento</button>
         <button id="deleteAllBtn" class="danger-outline-btn">Eliminar todos</button>
         <button id="cancelDeleteBtn" class="secondary-btn">No, me lo he pensado mejor</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL ELIMINAR GRUPO -->
+  <div id="deleteGroupModal" class="modal hidden">
+    <div class="modal-content">
+      <button id="closeDeleteGroupModal" class="modal-close">✖</button>
+
+      <h3>Eliminar grupo</h3>
+      <p id="deleteGroupModalText"></p>
+
+      <div class="modal-actions">
+        <button id="confirmDeleteGroupBtn" class="danger-outline-btn">Eliminar grupo</button>
+        <button id="cancelDeleteGroupBtn" class="secondary-btn">No, me lo he pensado mejor</button>
       </div>
     </div>
   </div>

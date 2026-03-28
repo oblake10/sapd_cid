@@ -6,8 +6,6 @@ import {
   ReCaptchaV3Provider
 } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app-check.js";
 
-self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
-
 const firebaseConfig = {
   apiKey: "AIzaSyCLMQQpa04oSPl07UgCAzT5mjXLhWKK7us",
   authDomain: "cid-sapd.firebaseapp.com",
@@ -20,6 +18,14 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 
+const isLocalhost =
+  window.location.hostname === "localhost" ||
+  window.location.hostname === "127.0.0.1";
+
+if (isLocalhost) {
+  self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+}
+
 initializeAppCheck(app, {
   provider: new ReCaptchaV3Provider("6LfK-ZosAAAAAMrqe-eBgbz1GwSMovrBKQA964Rb"),
   isTokenAutoRefreshEnabled: true
@@ -27,9 +33,9 @@ initializeAppCheck(app, {
 
 const auth = getAuth(app);
 const db = getFirestore(app);
+
 console.log("firebase-config cargado");
+console.log("host:", window.location.hostname);
 console.log("debug token flag:", self.FIREBASE_APPCHECK_DEBUG_TOKEN);
 
 export { auth, db };
-
-
