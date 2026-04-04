@@ -364,26 +364,38 @@ function renderDraft() {
   }
 }
 
-function createEmojiIcon(type) {
+function createEmojiIcon(type, org) {
   const config = {
     graffiti: { className: "extra-marker extra-marker--graffiti", label: "🎨" },
     plantation: { className: "extra-marker extra-marker--plantation", label: "🌿" },
-    poi: { className: "extra-marker extra-marker--poi", label: "ℹ" },
+    poi: { className: "extra-marker extra-marker--poi", label: "ℹ️" },
     storage: { className: "extra-marker extra-marker--storage", label: "📦" },
     sales: { className: "extra-marker extra-marker--sales", label: "🫱🏾‍🫲🏿" }
   };
 
   const item = config[type];
 
+  const primary = org?.primaryColor || "#2A6BFF";
+  const secondary = org?.secondaryColor || "#B4CDD6";
+
   return L.divIcon({
-    className: item.className,
-    html: item.label,
-    iconSize: [36, 36],
-    iconAnchor: [18, 18],
-    popupAnchor: [0, -16]
+    className: "",
+    html: `
+      <div
+        class="${item.className}"
+        style="
+          --marker-primary: ${primary};
+          --marker-secondary: ${secondary};
+        "
+      >
+        <span class="extra-marker__emoji">${item.label}</span>
+      </div>
+    `,
+    iconSize: [28, 28],
+    iconAnchor: [10, 10],
+    popupAnchor: [0, -14]
   });
 }
-
 function renderExtras() {
   graffitiLayer.clearLayers();
   plantationsLayer.clearLayers();
@@ -404,7 +416,7 @@ function renderExtras() {
         if (!latLng) return;
 
         const marker = L.marker(latLng, {
-          icon: createEmojiIcon("graffiti")
+          icon: createEmojiIcon("graffiti", org)
         })
           .bindPopup(`<strong>${org.name}</strong><br>Grafiti #${index + 1}`)
           .addTo(graffitiLayer);
@@ -427,7 +439,7 @@ function renderExtras() {
         if (!latLng) return;
 
         const marker = L.marker(latLng, {
-          icon: createEmojiIcon("plantation")
+          icon: createEmojiIcon("plantation", org)
         })
           .bindPopup(`<strong>${org.name}</strong><br>Plantación #${index + 1}`)
           .addTo(plantationsLayer);
@@ -452,7 +464,7 @@ function renderExtras() {
         const label = point.label?.trim() || `Punto de interés #${index + 1}`;
 
         const marker = L.marker(latLng, {
-          icon: createEmojiIcon("poi")
+          icon: createEmojiIcon("poi", org)
         })
           .bindPopup(`<strong>${org.name}</strong><br>${label}`)
           .addTo(poisLayer);
@@ -475,7 +487,7 @@ function renderExtras() {
         if (!latLng) return;
 
         const marker = L.marker(latLng, {
-          icon: createEmojiIcon("storage")
+          icon: createEmojiIcon("storage", org)
         })
           .bindPopup(`<strong>${org.name}</strong><br>Almacén #${index + 1}`)
           .addTo(storageLayer);
@@ -498,7 +510,7 @@ function renderExtras() {
         if (!latLng) return;
 
         const marker = L.marker(latLng, {
-          icon: createEmojiIcon("sales")
+          icon: createEmojiIcon("sales", org)
         })
           .bindPopup(`<strong>${org.name}</strong><br>Punto de venta #${index + 1}`)
           .addTo(salesLayer);
