@@ -435,7 +435,7 @@ function createSpecialIcon(type) {
     },
     deliveryPoint: {
       className: "special-marker special-marker--delivery",
-      label: "📦"
+      label: "📥"
     }
   };
 
