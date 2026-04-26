@@ -44,6 +44,7 @@ const plantationsLayer = L.layerGroup().addTo(map);
 const poisLayer = L.layerGroup().addTo(map);
 const storageLayer = L.layerGroup().addTo(map);
 const salesLayer = L.layerGroup().addTo(map);
+const specialPointsLayer = L.layerGroup().addTo(map);
 
 const drawModeBtn = document.getElementById("drawModeBtn");
 const undoPointBtn = document.getElementById("undoPointBtn");
@@ -52,7 +53,6 @@ const saveOrgBtn = document.getElementById("saveOrgBtn");
 const fitMapBtn = document.getElementById("fitMapBtn");
 
 const addStorageBtn = document.getElementById("addStorageBtn");
-const addSalesBtn = document.getElementById("addSalesBtn");
 const addGraffitiBtn = document.getElementById("addGraffitiBtn");
 const addPlantationBtn = document.getElementById("addPlantationBtn");
 const addPoiBtn = document.getElementById("addPoiBtn");
@@ -87,6 +87,11 @@ const closeDeleteGroupModal = document.getElementById("closeDeleteGroupModal");
 
 const viewAllBtn = document.getElementById("viewAllBtn");
 
+const addSalesBtn = document.getElementById("addSalesBtn");
+const addIllegalBoatBtn = document.getElementById("addIllegalBoatBtn");
+const addDeliveryPointBtn = document.getElementById("addDeliveryPointBtn");
+
+
 let currentDeleteGroupId = null;
 
 let currentDeleteContext = null;
@@ -97,6 +102,9 @@ let draftPoints = [];
 
 let selectedOrganizationId = null;
 let currentAddMode = null;
+let currentSpecialMode = null;
+let specialPoints = [];
+let unsubscribeSpecialPoints = null;
 let unsubscribeOrganizations = null;
 
 let visibilityState = {
@@ -110,6 +118,15 @@ let visibilityState = {
 
 let pageInitialized = false;
 let hasRetriedOrganizationsListener = false;
+
+function setCurrentSpecialMode(mode) {
+  drawingMode = false;
+  currentAddMode = null;
+  currentSpecialMode = currentSpecialMode === mode ? null : mode;
+
+  drawModeBtn.textContent = "Definir zona";
+  updateModeUI();
+}
 
 function redirectToLogin() {
   window.location.href = "login.html";
@@ -195,6 +212,7 @@ function switchBaseMap(style) {
   poisLayer.bringToFront();
   storageLayer.bringToFront();
   salesLayer.bringToFront();
+  specialPointsLayer.bringToFront();
 }
 
 function resetMapView() {
@@ -267,7 +285,8 @@ function setSelectedOrganization(orgId) {
 }
 
 function clearCurrentAddMode() {
-  currentAddMode = null;
+   currentAddMode = null;
+  currentSpecialMode = null;
   updateModeUI();
 }
 
@@ -297,6 +316,18 @@ function updateModeUI() {
   addPoiBtn.classList.toggle("is-active", currentAddMode === "poi");
   addStorageBtn.classList.toggle("is-active", currentAddMode === "storage");
   addSalesBtn.classList.toggle("is-active", currentAddMode === "sales");
+  addIllegalBoatBtn?.classList.toggle("is-active", currentSpecialMode === "illegalBoat");
+addDeliveryPointBtn?.classList.toggle("is-active", currentSpecialMode === "deliveryPoint");
+
+if (currentSpecialMode === "illegalBoat") {
+  modeStatus.textContent = "Modo activo: añade embarcaciones ilegales al mapa.";
+  return;
+}
+
+if (currentSpecialMode === "deliveryPoint") {
+  modeStatus.textContent = "Modo activo: añade puntos de entrega al mapa.";
+  return;
+}
 
   const selectedOrg = getSelectedOrganization();
 
@@ -391,11 +422,38 @@ function createEmojiIcon(type, org) {
         <span class="extra-marker__emoji">${item.label}</span>
       </div>
     `,
-    iconSize: [28, 28],
-    iconAnchor: [10, 10],
+    iconSize: [20, 20],
+    iconAnchor: [10, 11],
     popupAnchor: [0, -14]
   });
 }
+function createSpecialIcon(type) {
+  const config = {
+    illegalBoat: {
+      className: "special-marker special-marker--boat",
+      label: "🚤"
+    },
+    deliveryPoint: {
+      className: "special-marker special-marker--delivery",
+      label: "📦"
+    }
+  };
+
+  const item = config[type];
+
+  return L.divIcon({
+    className: "",
+    html: `
+      <div class="${item.className}">
+        <span class="special-marker__emoji">${item.label}</span>
+      </div>
+    `,
+    iconSize: [22, 22],
+    iconAnchor: [11, 12],
+    popupAnchor: [0, -14]
+  });
+}
+
 function renderExtras() {
   graffitiLayer.clearLayers();
   plantationsLayer.clearLayers();
@@ -526,6 +584,40 @@ function renderExtras() {
         });
       });
     }
+  });
+}
+
+function renderSpecialPoints() {
+  specialPointsLayer.clearLayers();
+
+  specialPoints.forEach((point) => {
+    const latLng = firestorePointToLeaflet(point);
+    if (!latLng) return;
+
+    const label =
+      point.type === "illegalBoat"
+        ? "Embarcación ilegal"
+        : "Punto de entrega";
+
+    const marker = L.marker(latLng, {
+      icon: createSpecialIcon(point.type)
+    })
+      .bindPopup(`<strong>${label}</strong>`)
+      .addTo(specialPointsLayer);
+
+    marker.on("contextmenu", async (e) => {
+      L.DomEvent.stopPropagation(e);
+
+      const confirmed = confirm(`¿Eliminar "${label}" del mapa?`);
+      if (!confirmed) return;
+
+      try {
+        await deleteDoc(doc(db, "mapSpecialPoints", point.id));
+      } catch (error) {
+        console.error("Error al eliminar punto especial:", error);
+        alert("No se pudo eliminar el punto especial.");
+      }
+    });
   });
 }
 
@@ -846,6 +938,25 @@ async function addExtraPointToOrganization(type, latLng) {
   }
 }
 
+async function addSpecialPointToMap(type, latLng) {
+  const point = {
+    type,
+    lat: Math.round(latLng.lat),
+    lng: Math.round(latLng.lng),
+    createdAt: serverTimestamp()
+  };
+
+  try {
+    await addDoc(collection(db, "mapSpecialPoints"), point);
+
+    currentSpecialMode = null;
+    updateModeUI();
+  } catch (error) {
+    console.error("Error al guardar punto especial:", error);
+    alert("No se pudo guardar el punto especial.");
+  }
+}
+
 function listenOrganizations() {
   if (unsubscribeOrganizations) {
     unsubscribeOrganizations();
@@ -929,6 +1040,29 @@ function listenOrganizations() {
   );
 }
 
+function listenSpecialPoints() {
+  if (unsubscribeSpecialPoints) {
+    unsubscribeSpecialPoints();
+    unsubscribeSpecialPoints = null;
+  }
+
+  unsubscribeSpecialPoints = onSnapshot(
+    collection(db, "mapSpecialPoints"),
+    (snapshot) => {
+      specialPoints = snapshot.docs.map((item) => ({
+        id: item.id,
+        ...item.data()
+      }));
+
+      renderSpecialPoints();
+    },
+    (error) => {
+      console.error("Error al cargar puntos especiales:", error);
+      alert("No se pudieron cargar los puntos especiales.");
+    }
+  );
+}
+
 function bindUI() {
   drawModeBtn?.addEventListener("click", () => {
     clearValidationErrors();
@@ -1005,6 +1139,14 @@ function bindUI() {
     clearCurrentAddMode();
   });
 
+  addIllegalBoatBtn?.addEventListener("click", () => {
+  setCurrentSpecialMode("illegalBoat");
+});
+
+addDeliveryPointBtn?.addEventListener("click", () => {
+  setCurrentSpecialMode("deliveryPoint");
+});
+
   map.on("click", async (e) => {
     if (drawingMode) {
       const point = [
@@ -1020,9 +1162,14 @@ function bindUI() {
       return;
     }
 
-    if (!currentAddMode) return;
+   if (currentSpecialMode) {
+  await addSpecialPointToMap(currentSpecialMode, e.latlng);
+  return;
+}
 
-    await addExtraPointToOrganization(currentAddMode, e.latlng);
+if (!currentAddMode) return;
+
+await addExtraPointToOrganization(currentAddMode, e.latlng);
   });
 
   primaryColor?.addEventListener("input", renderDraft);
@@ -1099,6 +1246,7 @@ function initPage() {
   renderOrganizations();
   renderDraft();
   listenOrganizations();
+  listenSpecialPoints();
   clearValidationErrors();
   updateButtonAvailability();
   updateSelectedOrganizationUI();
