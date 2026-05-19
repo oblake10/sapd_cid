@@ -26,11 +26,11 @@ body {
   min-height: 100%;
   font-family: "Montserrat", sans-serif;
   color: #f8f9ff;
-  background:
-    radial-gradient(circle at 20% 20%, rgba(0, 28, 54, 0.15), transparent 25%),
-    radial-gradient(circle at 80% 30%, rgba(88, 199, 250, 0.12), transparent 30%),
-    radial-gradient(circle at 50% 80%, rgba(78, 0, 194, 0.18), transparent 35%),
-    linear-gradient(180deg, #0b101d 0%, #181c25 40%, #000000 100%);
+ background:
+    radial-gradient(circle at 20% 20%, rgba(0, 10, 19, 0.15), transparent 25%),
+    radial-gradient(circle at 80% 30%, rgba(7, 15, 19, 0.12), transparent 30%),
+    radial-gradient(circle at 50% 80%, rgba(0, 18, 53, 0.18), transparent 35%),
+    linear-gradient(180deg, #060708 0%, #0e1116 40%, #000000 100%);
 }
 
 body {
@@ -45,7 +45,10 @@ body::before {
   pointer-events: none;
   z-index: 0;
 }
-
+body.auth-loading {
+  opacity: 0;
+  visibility: hidden;
+}
 button,
 input {
   font: inherit;
@@ -112,9 +115,7 @@ input {
 
 .cid-nav__link.active a {
   color: var(--nav-text-active);
-  text-shadow:
-    0 0 10px rgba(0, 217, 255, 0.45),
-    0 0 20px rgba(0, 217, 255, 0.25);
+  text-shadow: 0 0 10px rgba(0, 217, 255, 0.45), 0 0 20px rgba(0, 217, 255, 0.25);
 }
 
 .cid-nav__light {
@@ -125,24 +126,20 @@ input {
   height: 0.35em;
   border-radius: 999px;
   background: var(--nav-glow);
-  display: flex;
-  justify-content: center;
   transition: 0.3s ease;
   z-index: 1;
-  box-shadow:
-    0 0 10px var(--nav-glow),
-    0 0 24px rgba(0, 217, 255, 0.45);
+  box-shadow: 0 0 10px var(--nav-glow), 0 0 24px rgba(0, 217, 255, 0.45);
 }
 
 .cid-nav__light::before {
+  left: 50%;
+  transform: translateX(-50%);
   content: "";
   position: absolute;
   top: 0.35em;
   width: 7em;
   height: 7em;
-  background: linear-gradient(to bottom,
-      rgba(0, 217, 255, 0.28) -40%,
-      rgba(0, 217, 255, 0) 85%);
+  background: linear-gradient(to bottom, rgba(0, 217, 255, 0.28) -40%, rgba(0, 217, 255, 0) 85%);
   clip-path: polygon(30% 0, 70% 0, 100% 100%, 0% 100%);
   filter: blur(2px);
 }
@@ -874,4 +871,28 @@ input {
 .special-marker__emoji {
   display: block;
   transform: translate(-0.5px, -0.5px);
+}
+
+.cid-nav__user {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  width: 130px;
+  flex: 0 0 130px;
+  z-index: 3;
+}
+
+.auth-nav-btn {
+  border: none;
+  border-radius: 14px;
+  padding: 12px 18px;
+  background: linear-gradient(135deg, #00c2ff, #0077ff);
+  color: white;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(0, 119, 255, 0.25);
+}
+
+.auth-nav-btn:hover {
+  transform: translateY(-2px);
 }

@@ -1,5 +1,8 @@
 import { auth, db } from "./firebase-config.js";
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+import {
+  onAuthStateChanged,
+  signOut
+} from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 import {
   collection,
   onSnapshot,
@@ -8,16 +11,8 @@ import {
   updateDoc,
   doc,
   arrayUnion,
-  serverTimestamp
+  arrayRemove
 } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
-
-import { getApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-import {
-  getStorage,
-  ref,
-  uploadBytes,
-  getDownloadURL
-} from "https://www.gstatic.com/firebasejs/12.10.0/firebase-storage.js";
 
 const MAP_WIDTH = 1800;
 const MAP_HEIGHT = 2048;
@@ -30,34 +25,59 @@ const mapStyleConfig = {
   satellite: "assets/images/map-satelite.png"
 };
 
+const authNavBtn = document.getElementById("authNavBtn");
 const searchInput = document.getElementById("searchInput");
 const groupsGrid = document.getElementById("groupsGrid");
-const statusBox = document.getElementById("statusBox");
-const groupCount = document.getElementById("groupCount");
+const summaryPill = document.getElementById("summaryPill");
 
 const navLinks = document.querySelectorAll(".cid-nav__link");
 const navLight = document.querySelector(".cid-nav__light");
 
-const storage = getStorage(getApp());
 
 let organizations = [];
 let renderedMaps = [];
 let navInitialized = false;
 
+onAuthStateChanged(auth, (user) => {
+  document.body.classList.remove("auth-loading");
+
+  if (!user) {
+    redirectToLogin();
+    return;
+  }
+
+  initNavLight();
+  initSearch();
+  listenOrganizations();
+
+  const authNavBtn = document.getElementById("authNavBtn");
+
+  if (authNavBtn) {
+    const username = user.email?.split("@")[0] || "Usuario";
+
+    authNavBtn.textContent = username;
+
+    authNavBtn.addEventListener("click", () => {
+      window.location.href = "login.html";
+    });
+  }
+});
+
 function redirectToLogin() {
   window.location.href = "login.html";
 }
-
 function moveNavLight(linkElement) {
-  if (!navLight || !linkElement || !linkElement.parentElement) return;
+  if (!navLight || !linkElement) return;
 
-  const linkRect = linkElement.getBoundingClientRect();
-  const parentRect = linkElement.parentElement.getBoundingClientRect();
+  const target = linkElement.querySelector("a") || linkElement;
+  const linkRect = target.getBoundingClientRect();
+  const parentRect = navLight.parentElement.getBoundingClientRect();
+
   const left =
     linkRect.left -
     parentRect.left +
-    (linkRect.width / 2) -
-    (navLight.offsetWidth / 2);
+    linkRect.width / 2 -
+    navLight.offsetWidth / 2;
 
   navLight.style.left = `${left}px`;
 }
@@ -86,12 +106,29 @@ function initNavLight() {
 }
 
 function setStatus(message, type = "") {
-  statusBox.textContent = message;
-  statusBox.classList.remove("is-error", "is-success");
+  if (!summaryPill) return;
+
+  summaryPill.textContent = message;
+  summaryPill.classList.remove("is-error", "is-success");
 
   if (type) {
-    statusBox.classList.add(type);
+    summaryPill.classList.add(type);
   }
+}
+
+function setGroupCount(count) {
+  if (!summaryPill) return;
+
+  summaryPill.innerHTML = `
+    <div class="summary-card__icon">👥</div>
+
+    <div>
+      <strong>${count} grupo${count === 1 ? "" : "s"} encontrado${count === 1 ? "" : "s"}</strong>
+      <span>Total de organizaciones registradas</span>
+    </div>
+
+    <div class="summary-card__arrow">›</div>
+  `;
 }
 
 function normalizeText(value) {
@@ -109,6 +146,10 @@ function firestorePointToLeaflet(point) {
   }
 
   return [point.lat, point.lng];
+}
+
+function hasValidOrganizationName(org) {
+  return typeof org?.name === "string" && org.name.trim().length > 1;
 }
 
 function getColorName(hex) {
@@ -200,28 +241,38 @@ function buildGroupCard(org) {
   const photos = Array.isArray(org.photos) ? org.photos : [];
 
   card.innerHTML = `
-    <div class="group-card__header">
-      <div class="group-title-wrap">
-        <h2>${escapeHtml(org.name || "Grupo sin nombre")}</h2>
+   <div class="group-card__header group-card__header--premium">
+  <div
+    class="group-name-card"
+    style="
+      --group-primary:${escapeHtml(org.primaryColor || "#34d6ff")};
+      --group-secondary:${escapeHtml(org.secondaryColor || "#ffffff")};
+    "
+  >
 
-        <div class="group-badges">
-          <div class="color-badge">
-            <span class="color-dot" style="background:${escapeHtml(org.primaryColor || "#34d6ff")}"></span>
-            <span>Principal: ${escapeHtml(getColorName(org.primaryColor))}</span>
-          </div>
+    <h2>${escapeHtml(org.name)}</h2>
 
-          <div class="color-badge">
-            <span class="color-dot" style="background:${escapeHtml(org.secondaryColor || "#9c7dff")}"></span>
-            <span>Secundario: ${escapeHtml(getColorName(org.secondaryColor))}</span>
-          </div>
-        </div>
+    <div class="group-badges">
+      <div class="color-badge">
+        <span 
+          class="color-dot" 
+          style="background:${escapeHtml(org.primaryColor || "#34d6ff")}"
+        ></span>
+        <span>Principal</span>
+      </div>
+
+      <div class="color-badge">
+        <span 
+          class="color-dot" 
+          style="background:${escapeHtml(org.secondaryColor || "#ffffff")}"
+        ></span>
+        <span>Secundario</span>
       </div>
     </div>
+  </div>
+</div>
 
-    <div class="group-location">
-      <strong>Ubicación:</strong> ${escapeHtml(locationText)}
-    </div>
-
+   
     <div class="group-content">
       <div class="group-left">
         <section class="block-card">
@@ -241,7 +292,7 @@ function buildGroupCard(org) {
         </section>
 
         <section class="block-card">
-          <h3>Subir foto y anclar al grupo</h3>
+          <h3>Añadir foto al grupo</h3>
 
           <form class="upload-form" data-org-id="${escapeHtml(org.id)}">
             <textarea
@@ -251,9 +302,7 @@ function buildGroupCard(org) {
             ></textarea>
 
             <div class="upload-row">
-              <label class="file-label" for="file-${org.id}">
-                Seleccionar imagen
-              </label>
+              
               <input
                 id="file-${org.id}"
                 class="hidden-input file-input"
@@ -261,23 +310,29 @@ function buildGroupCard(org) {
                 name="image"
                 accept="image/*"
               />
-              <button class="btn btn-primary upload-btn" type="submit">
-                Subir foto
-              </button>
+              <button class="upload-btn" type="submit">
+  <span>⬆</span>
+  Subir foto
+</button>
             </div>
 
-            <div class="selected-file" data-file-name>
-              No se ha seleccionado ningún archivo.
-            </div>
+           
           </form>
         </section>
       </div>
 
       <div class="group-right">
-        <section class="block-card">
-          <h3>Galería de fotos</h3>
-          <div class="gallery-grid" data-gallery></div>
-        </section>
+       <section class="block-card">
+  <h3>Galería de fotos</h3>
+
+  <div class="photo-carousel">
+    <button class="carousel-btn carousel-btn--prev" type="button" data-carousel-prev>‹</button>
+
+    <div class="gallery-grid" data-gallery></div>
+
+    <button class="carousel-btn carousel-btn--next" type="button" data-carousel-next>›</button>
+  </div>
+</section>
       </div>
     </div>
   `;
@@ -295,26 +350,81 @@ function buildGroupCard(org) {
       return bTime - aTime;
     });
 
-    orderedPhotos.forEach((photo) => {
-      const photoCard = document.createElement("article");
-      photoCard.className = "photo-card";
+orderedPhotos.forEach((photo) => {
+  const photoCard = document.createElement("article");
+  photoCard.className = "photo-card";
 
-      const caption = photo.caption?.trim() || "Sin pie de foto";
-      const uploadedBy = photo.uploadedBy || "Desconocido";
-      const uploadedAt = formatTimestamp(photo.uploadedAt);
+  const caption = photo.caption?.trim() || "Sin pie de foto";
+  const uploadedAt = formatTimestamp(photo.uploadedAt);
+const adminEmails = [
+  "callahan@cid.com"
+];
 
-      photoCard.innerHTML = `
-        <img src="${escapeAttribute(photo.url || "")}" alt="${escapeAttribute(caption)}" />
-        <div class="photo-caption">
-          <div>${escapeHtml(caption)}</div>
-          <div class="photo-meta">
-            Subida por ${escapeHtml(uploadedBy)} · ${escapeHtml(uploadedAt)}
-          </div>
-        </div>
-      `;
+const isAdmin = adminEmails.includes(auth.currentUser?.email);
 
-      gallery.appendChild(photoCard);
+photoCard.innerHTML = `
+  <div class="photo-card__image-wrap">
+
+    ${isAdmin ? `
+      <button class="photo-delete-btn" type="button">
+        ✕
+      </button>
+    ` : ""}
+
+    <img 
+      src="${escapeAttribute(photo.url || "")}" 
+      alt="${escapeAttribute(caption)}" 
+    />
+  </div>
+
+  <div class="photo-card__body">
+    <div class="photo-card__caption">${escapeHtml(caption)}</div>
+    <div class="photo-card__date">${escapeHtml(uploadedAt)}</div>
+  </div>
+`;
+
+const deleteBtn = photoCard.querySelector(".photo-delete-btn");
+
+deleteBtn?.addEventListener("click", async () => {
+  const confirmed = confirm("¿Eliminar esta foto de la galería?");
+
+  if (!confirmed) return;
+
+  try {
+    await updateDoc(doc(db, "criminalOrganizations", org.id), {
+      photos: arrayRemove(photo)
     });
+
+    setStatus("Foto eliminada correctamente.", "is-success");
+
+  } catch (error) {
+    console.error(error);
+
+    setStatus(
+      "No se pudo eliminar la foto.",
+      "is-error"
+    );
+  }
+});
+  gallery.appendChild(photoCard);
+});
+
+const prevBtn = card.querySelector("[data-carousel-prev]");
+const nextBtn = card.querySelector("[data-carousel-next]");
+
+prevBtn?.addEventListener("click", () => {
+  gallery.scrollBy({
+    left: -gallery.clientWidth,
+    behavior: "smooth"
+  });
+});
+
+nextBtn?.addEventListener("click", () => {
+  gallery.scrollBy({
+    left: gallery.clientWidth,
+    behavior: "smooth"
+  });
+});
   }
 
   const form = card.querySelector(".upload-form");
@@ -335,6 +445,18 @@ function buildGroupCard(org) {
     const file = fileInput?.files?.[0];
     const caption = form.querySelector("[name='caption']")?.value?.trim() || "";
 
+    if (!file) {
+      setStatus("Debes seleccionar una imagen antes de subirla.", "is-error");
+      return;
+    }
+
+    if (file.size > 4 * 1024 * 1024) {
+      setStatus(
+        "La imagen es demasiado grande. Usa una imagen de menos de 4MB.",
+        "is-error"
+      );
+      return;
+    }
     if (!file) {
       setStatus("Debes seleccionar una imagen antes de subirla.", "is-error");
       return;
@@ -370,11 +492,15 @@ function renderOrganizations() {
   const searchTerm = normalizeText(searchInput?.value || "");
 
   const filteredOrganizations = organizations.filter((org) => {
+    if (!hasValidOrganizationName(org)) {
+      return false;
+    }
+
     const name = normalizeText(org.name);
     return name.includes(searchTerm);
   });
 
-  groupCount.textContent = String(filteredOrganizations.length);
+  setGroupCount(filteredOrganizations.length);
 
   if (!filteredOrganizations.length) {
     groupsGrid.appendChild(
@@ -461,8 +587,15 @@ function renderGroupMaps(org) {
     });
 
     const fitBounds = L.polygon(points).getBounds();
-    zoneMap.fitBounds(fitBounds, { padding: [20, 20] });
-    satelliteMap.fitBounds(fitBounds, { padding: [20, 20] });
+    zoneMap.fitBounds(fitBounds, {
+      padding: [120, 120],
+      maxZoom: 0
+    });
+
+    satelliteMap.fitBounds(fitBounds, {
+      padding: [120, 120],
+      maxZoom: 0
+    });
   } else {
     zoneMap.setView(center, initialZoom);
     satelliteMap.setView(center, initialZoom);
@@ -475,26 +608,49 @@ function renderGroupMaps(org) {
 }
 
 async function uploadPhotoForOrganization(org, file, caption) {
-  const safeFileName = `${Date.now()}-${sanitizeFileName(file.name)}`;
-  const fileRef = ref(storage, `criminal-groups/${org.id}/${safeFileName}`);
-
-  await uploadBytes(fileRef, file);
-  const downloadURL = await getDownloadURL(fileRef);
-
+  const imageBase64 = await compressImageToBase64(file);
   const currentUser = auth.currentUser;
 
   await updateDoc(doc(db, "criminalOrganizations", org.id), {
     photos: arrayUnion({
-      url: downloadURL,
+      url: imageBase64,
       caption,
       fileName: file.name,
       uploadedBy: currentUser?.email || "Usuario autenticado",
-      uploadedAt: new Date().toISOString(),
-      createdAtServer: serverTimestamp()
+      uploadedAt: new Date().toISOString()
     })
   });
 }
 
+function compressImageToBase64(file, maxWidth = 700, quality = 0.55) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      img.src = reader.result;
+    };
+
+    reader.onerror = () => reject(reader.error);
+
+    img.onload = () => {
+      const scale = Math.min(1, maxWidth / img.width);
+      const canvas = document.createElement("canvas");
+
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      resolve(canvas.toDataURL("image/jpeg", quality));
+    };
+
+    img.onerror = () => reject(new Error("No se pudo procesar la imagen."));
+
+    reader.readAsDataURL(file);
+  });
+}
 function listenOrganizations() {
   const organizationsQuery = query(
     collection(db, "criminalOrganizations"),
@@ -509,17 +665,17 @@ function listenOrganizations() {
         ...docSnapshot.data()
       }));
 
-      if (!organizations.length) {
-        groupCount.textContent = "0";
+      const validOrganizations = organizations.filter(hasValidOrganizationName);
+
+      if (!validOrganizations.length) {
         groupsGrid.innerHTML = "";
         groupsGrid.appendChild(
-          createEmptyState("No hay grupos criminales guardados en la base de datos.")
+          createEmptyState("No hay grupos criminales guardados con nombre válido.")
         );
-        setStatus("No hay grupos criminales registrados todavía.");
+        setGroupCount(0);
         return;
       }
 
-      setStatus("Grupos criminales cargados correctamente.", "is-success");
       renderOrganizations();
     },
     (error) => {
@@ -530,6 +686,16 @@ function listenOrganizations() {
       );
     }
   );
+}
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error);
+
+    reader.readAsDataURL(file);
+  });
 }
 
 function formatTimestamp(value) {

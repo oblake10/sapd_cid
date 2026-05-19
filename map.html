@@ -16,7 +16,7 @@
   <link rel="icon" type="image/png" href="assets/logos/logo.png" />
 </head>
 
-<body>
+<body class="auth-loading">
   <div class="app-shell">
     <header class="topbar">
       <nav class="cid-nav">
@@ -29,6 +29,12 @@
           </li>
           <li class="cid-nav__link active">
             <a href="map.html">Mapa Criminal</a>
+          </li>
+
+          <li class="cid-nav__user">
+            <button id="authNavBtn" class="auth-nav-btn" type="button">
+              Login
+            </button>
           </li>
 
           <span class="cid-nav__light"></span>
@@ -94,7 +100,7 @@
               <span>🫱🏾‍🫲🏿</span>
               <span>Punto de venta</span>
             </button>
-            <button id="addIllegalBoatBtn" type="button" class="icon-action-btn">
+            <!--<button id="addIllegalBoatBtn" type="button" class="icon-action-btn">
               <span>🚤</span>
               <span>Embarcación ilegal</span>
             </button>
@@ -102,7 +108,7 @@
             <button id="addDeliveryPointBtn" type="button" class="icon-action-btn">
               <span>📥</span>
               <span>Punto de entrega</span>
-            </button>
+            </button>-->
           </div>
 
           <button id="cancelModeBtn" type="button" class="secondary-outline-btn">

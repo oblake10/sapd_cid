@@ -10,13 +10,16 @@ import {
   arrayUnion
 } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
-
+import {
+  onAuthStateChanged,
+  signOut
+} from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 const MAP_WIDTH = 1800;
 const MAP_HEIGHT = 2048;
 const bounds = [[0, 0], [MAP_HEIGHT, MAP_WIDTH]];
 const center = [MAP_HEIGHT / 2, MAP_WIDTH / 2];
 const initialZoom = 1;
+const authNavBtn = document.getElementById("authNavBtn");
 
 const map = L.map("map", {
   crs: L.CRS.Simple,
@@ -44,7 +47,7 @@ const plantationsLayer = L.layerGroup().addTo(map);
 const poisLayer = L.layerGroup().addTo(map);
 const storageLayer = L.layerGroup().addTo(map);
 const salesLayer = L.layerGroup().addTo(map);
-const specialPointsLayer = L.layerGroup().addTo(map);
+/*const specialPointsLayer = L.layerGroup().addTo(map);*/
 
 const drawModeBtn = document.getElementById("drawModeBtn");
 const undoPointBtn = document.getElementById("undoPointBtn");
@@ -88,8 +91,8 @@ const closeDeleteGroupModal = document.getElementById("closeDeleteGroupModal");
 const viewAllBtn = document.getElementById("viewAllBtn");
 
 const addSalesBtn = document.getElementById("addSalesBtn");
-const addIllegalBoatBtn = document.getElementById("addIllegalBoatBtn");
-const addDeliveryPointBtn = document.getElementById("addDeliveryPointBtn");
+//const addIllegalBoatBtn = document.getElementById("addIllegalBoatBtn");
+//const addDeliveryPointBtn = document.getElementById("addDeliveryPointBtn");
 
 
 let currentDeleteGroupId = null;
@@ -102,9 +105,9 @@ let draftPoints = [];
 
 let selectedOrganizationId = null;
 let currentAddMode = null;
-let currentSpecialMode = null;
-let specialPoints = [];
-let unsubscribeSpecialPoints = null;
+//let currentSpecialMode = null;
+//let specialPoints = [];
+//let unsubscribeSpecialPoints = null;
 let unsubscribeOrganizations = null;
 
 let visibilityState = {
@@ -119,14 +122,15 @@ let visibilityState = {
 let pageInitialized = false;
 let hasRetriedOrganizationsListener = false;
 
-function setCurrentSpecialMode(mode) {
+
+/*function setCurrentSpecialMode(mode) {
   drawingMode = false;
   currentAddMode = null;
   currentSpecialMode = currentSpecialMode === mode ? null : mode;
 
   drawModeBtn.textContent = "Definir zona";
   updateModeUI();
-}
+}*/
 
 function redirectToLogin() {
   window.location.href = "login.html";
@@ -212,7 +216,7 @@ function switchBaseMap(style) {
   poisLayer.bringToFront();
   storageLayer.bringToFront();
   salesLayer.bringToFront();
-  specialPointsLayer.bringToFront();
+  //specialPointsLayer.bringToFront();
 }
 
 function resetMapView() {
@@ -316,10 +320,10 @@ function updateModeUI() {
   addPoiBtn.classList.toggle("is-active", currentAddMode === "poi");
   addStorageBtn.classList.toggle("is-active", currentAddMode === "storage");
   addSalesBtn.classList.toggle("is-active", currentAddMode === "sales");
-  addIllegalBoatBtn?.classList.toggle("is-active", currentSpecialMode === "illegalBoat");
-addDeliveryPointBtn?.classList.toggle("is-active", currentSpecialMode === "deliveryPoint");
+  //addIllegalBoatBtn?.classList.toggle("is-active", currentSpecialMode === "illegalBoat");
+//addDeliveryPointBtn?.classList.toggle("is-active", currentSpecialMode === "deliveryPoint");
 
-if (currentSpecialMode === "illegalBoat") {
+/*if (currentSpecialMode === "illegalBoat") {
   modeStatus.textContent = "Modo activo: añade embarcaciones ilegales al mapa.";
   return;
 }
@@ -327,7 +331,7 @@ if (currentSpecialMode === "illegalBoat") {
 if (currentSpecialMode === "deliveryPoint") {
   modeStatus.textContent = "Modo activo: añade puntos de entrega al mapa.";
   return;
-}
+}*/
 
   const selectedOrg = getSelectedOrganization();
 
@@ -427,6 +431,7 @@ function createEmojiIcon(type, org) {
     popupAnchor: [0, -14]
   });
 }
+/*
 function createSpecialIcon(type) {
   const config = {
     illegalBoat: {
@@ -452,7 +457,7 @@ function createSpecialIcon(type) {
     iconAnchor: [11, 12],
     popupAnchor: [0, -14]
   });
-}
+}*/
 
 function renderExtras() {
   graffitiLayer.clearLayers();
@@ -587,6 +592,8 @@ function renderExtras() {
   });
 }
 
+
+/*
 function renderSpecialPoints() {
   specialPointsLayer.clearLayers();
 
@@ -619,7 +626,7 @@ function renderSpecialPoints() {
       }
     });
   });
-}
+} */
 
 function renderOrganizations() {
   organizationsLayer.clearLayers();
@@ -937,7 +944,7 @@ async function addExtraPointToOrganization(type, latLng) {
     alert("No se pudo guardar el elemento.");
   }
 }
-
+/*
 async function addSpecialPointToMap(type, latLng) {
   const point = {
     type,
@@ -955,7 +962,7 @@ async function addSpecialPointToMap(type, latLng) {
     console.error("Error al guardar punto especial:", error);
     alert("No se pudo guardar el punto especial.");
   }
-}
+} */
 
 function listenOrganizations() {
   if (unsubscribeOrganizations) {
@@ -1040,6 +1047,7 @@ function listenOrganizations() {
   );
 }
 
+/*
 function listenSpecialPoints() {
   if (unsubscribeSpecialPoints) {
     unsubscribeSpecialPoints();
@@ -1061,7 +1069,7 @@ function listenSpecialPoints() {
       alert("No se pudieron cargar los puntos especiales.");
     }
   );
-}
+} */
 
 function bindUI() {
   drawModeBtn?.addEventListener("click", () => {
@@ -1139,13 +1147,13 @@ function bindUI() {
     clearCurrentAddMode();
   });
 
-  addIllegalBoatBtn?.addEventListener("click", () => {
+  /*addIllegalBoatBtn?.addEventListener("click", () => {
   setCurrentSpecialMode("illegalBoat");
 });
 
 addDeliveryPointBtn?.addEventListener("click", () => {
   setCurrentSpecialMode("deliveryPoint");
-});
+});*/
 
   map.on("click", async (e) => {
     if (drawingMode) {
@@ -1162,10 +1170,10 @@ addDeliveryPointBtn?.addEventListener("click", () => {
       return;
     }
 
-   if (currentSpecialMode) {
+   /*if (currentSpecialMode) {
   await addSpecialPointToMap(currentSpecialMode, e.latlng);
   return;
-}
+}*/
 
 if (!currentAddMode) return;
 
@@ -1246,7 +1254,7 @@ function initPage() {
   renderOrganizations();
   renderDraft();
   listenOrganizations();
-  listenSpecialPoints();
+  //listenSpecialPoints();
   clearValidationErrors();
   updateButtonAvailability();
   updateSelectedOrganizationUI();
@@ -1288,11 +1296,29 @@ viewAllBtn?.addEventListener("click", () => {
 });
 
 
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, async (user) => {
   if (!user) {
-    redirectToLogin();
+    window.location.href = "login.html";
     return;
   }
 
+  if (authNavBtn) {
+    const username = user.email?.split("@")[0] || "Usuario";
+
+    authNavBtn.textContent = username;
+
+    authNavBtn.onclick = async () => {
+      await signOut(auth);
+      window.location.href = "login.html";
+    };
+  }
+
   initPage();
+
+  requestAnimationFrame(() => {
+    const active = document.querySelector(".cid-nav__link.active");
+    if (active) moveNavLight(active);
+
+    document.body.classList.remove("auth-loading");
+  });
 });

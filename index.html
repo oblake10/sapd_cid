@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="./css/style.css" />
 </head>
 
-<body>
+<body class="auth-loading">
     <div class="app-shell">
         <header class="topbar">
             <nav class="cid-nav">
@@ -27,6 +27,11 @@
                     </li>
                     <li class="cid-nav__link">
                         <a href="map.html">Mapa Criminal</a>
+                    </li>
+                    <li class="cid-nav__user">
+                        <button id="authNavBtn" class="auth-nav-btn" type="button">
+                            Login
+                        </button>
                     </li>
 
                     <span class="cid-nav__light"></span>
@@ -41,80 +46,102 @@
 
             <section class="pyramid-layout">
                 <div class="cards-row row-1">
+                    
+
                     <article class="card member-card">
                         <div class="card-content">
                             <div class="member-img">
+                                <img src="./assets/images/miembros/Lyra_Verdugo.png" alt="Lyra Verdugo">
+                                <div class="member-plate">117</div>
+                            </div>
+
+                            <div class="member-name">Lyra Verdugo</div>
+                            <div class="member-position">Jefa Supervisora</div>
+                            <div class="member-role">Coordinación CID</div>
+                            <div class="member-interests">
+                                <span>Todo</span>
+                            </div>
+                        </div>
+                    </article>
+                    <article class="card member-card">
+                        <div class="card-content">
+                            <div class="member-img">
+                                <img src="./assets/images/miembros/Mike_Sanders.png" alt="Mike Sanders">
+                                <div class="member-plate">120</div>
+                            </div>
+
+                            <div class="member-name">Mike Sanders</div>
+                            <div class="member-position">Capitana</div>
+                            <div class="member-role">Subcoordinador CID</div>
+                            <div class="member-interests">
+                                <span>Narcóticos</span>
+                                <span>Cotejación de datos</span>
+                                <span>Organizaciones</span>
+                                <span>HVTU</span>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+
+
+                <div class="cards-row row-2">
+<article class="card member-card">
+                        <div class="card-content">
+                            <div class="member-img">
                                 <img src="./assets/images/miembros/Aria_Fitz.png" alt="Aria Fitz">
-                                <div class="member-plate">118</div>
+                                <div class="member-plate">116</div>
                             </div>
 
                             <div class="member-name">Aria Fitz</div>
-                            <div class="member-position">Jefa Supervisora</div>
+                            <div class="member-position">Jefa Adjunta</div>
                             <div class="member-role">Supervisión CID</div>
                             <div class="member-interests">
                                 <span>Todo</span>
                             </div>
                         </div>
                     </article>
-
+                    
                 </div>
 
-                <div class="cards-row row-2">
-                    <article class="card member-card">
-                        <div class="card-content">
-                            <div class="member-img">
-                                <img src="./assets/images/miembros/Ethan_Lake.png" alt="Ethan Lake">
-                                <div class="member-plate">140</div>
-                            </div>
-
-                            <div class="member-name">Ethan Lake</div>
-                            <div class="member-position">Detective I</div>
-                            <div class="member-role">CID - Detective</div>
-                            <div class="member-interests">
-                                <span>Organizaciones</span>
-                                <span>Narcóticos</span>
-                                <span>Cotejación de datos</span>
-                            </div>
-                        </div>
-                    </article>
-
+                <div class="cards-row row-3">
+                   
                     <article class="card member-card">
                         <div class="card-content">
                             <div class="member-img">
                                 <img src="./assets/images/miembros/Shannon_Callahan.png" alt="Shannon Callahan">
-                                <div class="member-plate">141</div>
+                                <div class="member-plate">137</div>
                             </div>
 
                             <div class="member-name">Shannon Callahan</div>
-                            <div class="member-position">Detective I</div>
-                            <div class="member-role">CID - Detective</div>
+                            <div class="member-position">Detective II</div>
+                            <div class="member-role">Detective</div>
                             <div class="member-interests">
                                 <span>Organizaciones</span>
-                                <span>Narcóticos</span>
-                                <span>Homicidios</span>
                                 <span>HVTU</span>
+                                <span>Homicidios</span>
+                                <span>Narcóticos</span>
                             </div>
                         </div>
                     </article>
-
                     <article class="card member-card">
                         <div class="card-content">
                             <div class="member-img">
-                                <img src="./assets/images/miembros/Mike_Sanders.png" alt="Mike Sanders">
-                                <div class="member-plate">142</div>
+                                <img src="./assets/images/miembros/Ethan_Lake.png" alt="Ethan Lake">
+                                <div class="member-plate">138</div>
                             </div>
 
-                            <div class="member-name">Mike Sanders</div>
-                            <div class="member-position">Detective I</div>
-                            <div class="member-role">CID - Detective</div>
+                            <div class="member-name">Ethan Lake</div>
+                            <div class="member-position">Detective II</div>
+                            <div class="member-role">Detective</div>
                             <div class="member-interests">
+                                <span>Organizaciones</span>
                                 <span>Narcóticos</span>
                                 <span>Cotejación de datos</span>
-                                <span>Organizaciones</span>
-                                <span>HVTU</span>
                             </div>
                         </div>
                     </article>
+
+
 
                     <article class="card member-card">
                         <div class="card-content">
@@ -125,7 +152,7 @@
 
                             <div class="member-name">Evan Sinner</div>
                             <div class="member-position">Detective I</div>
-                            <div class="member-role">CID - Detective</div>
+                            <div class="member-role">Detective</div>
                             <div class="member-interests">
                                 <span>Narcóticos</span>
                             </div>
@@ -133,24 +160,65 @@
                     </article>
                 </div>
 
-                <div class="cards-row row-3">
+                <div class="cards-row row-4">
 
                     <article class="card member-card">
                         <div class="card-content">
                             <div class="member-img">
-                                <img src="./assets/images/miembros/Aura_Schuyler_266.png" alt="Aura Schuyler">
-                                <div class="member-plate">266</div>
+                                <img src="./assets/images/miembros/Sariel_De_Clarke.png" alt="Sariel De Clarke">
+                                <div class="member-plate">233</div>
                             </div>
 
-                            <div class="member-name">Aura Schuyler</div>
-                            <div class="member-position">Oficial II</div>
+                            <div class="member-name">Sariel De Clarke</div>
+                            <div class="member-position">Oficial III</div>
                             <div class="member-role">Investigadora</div>
                             <div class="member-interests">
-                                <span>Narcóticos</span>
+                                <span>Organizaciones</span>
+                                <span>Robos</span>
+                                <span>Homicidios</span>
+                                <span>Denuncias</span>
+                            </div>
+                        </div>
+                    </article>
+
+                    <article class="card member-card">
+                        <div class="card-content">
+                            <div class="member-img">
+                                <img src="./assets/images/miembros/Aiden_Murphy.png" alt="Aiden Murphy">
+                                <div class="member-plate">261</div>
+                            </div>
+
+                            <div class="member-name">Aiden Murphy</div>
+                            <div class="member-position">Oficial II</div>
+                            <div class="member-role">Investigador</div>
+                            <div class="member-interests">
+                                <span>Cotejación de datos</span>
+                                <span>Denuncias</span>
+                                <span>HVTU</span>
+                                <span>Robos</span>
+                                <span>Homicidios</span>
+                            </div>
+                        </div>
+                    </article>
+
+                    <article class="card member-card">
+                        <div class="card-content">
+                            <div class="member-img">
+                                <img src="./assets/images/miembros/Henry_Smith.png" alt="Henry Smith">
+                                <div class="member-plate">275</div>
+                            </div>
+
+                            <div class="member-name">Henry Smith</div>
+                            <div class="member-position">Oficial III</div>
+                            <div class="member-role">Investigador</div>
+                            <div class="member-interests">
+                                <span>Denuncias</span>
                                 <span>HVTU</span>
                             </div>
                         </div>
                     </article>
+
+
 
 
 
@@ -171,44 +239,26 @@
                             </div>
                         </div>
                     </article>
+                   
                 </div>
+ <div class="cards-row row-5">
 
-                <div class="cards-row row-4">
-                    <article class="card member-card">
+                 <article class="card member-card">
                         <div class="card-content">
                             <div class="member-img">
-                                <img src="./assets/images/miembros/Henry_Smith.png" alt="Henry Smith">
-                                <div class="member-plate">275</div>
+                                <img src="./assets/images/miembros/Aura_Schuyler_266.png" alt="Aura Schuyler">
+                                <div class="member-plate">266</div>
                             </div>
 
-                            <div class="member-name">Henry Smith</div>
-                            <div class="member-position">Oficial III</div>
-                            <div class="member-role">Ayudante de investigación</div>
+                            <div class="member-name">Aura Schuyler</div>
+                            <div class="member-position">Oficial II</div>
+                            <div class="member-role">Ausencia</div>
                             <div class="member-interests">
-                                <span>Denuncias</span>
+                                <span>Narcóticos</span>
                                 <span>HVTU</span>
                             </div>
                         </div>
                     </article>
-     <div class="cards-row row-4">
-                    <article class="card member-card">
-                        <div class="card-content">
-                            <div class="member-img">
-                                <img src="./assets/images/miembros/Sariel_De_Clarke.png" alt="Sariel De Clarke">
-                                <div class="member-plate">233</div>
-                            </div>
-
-                            <div class="member-name">Sariel De Clarke</div>
-                            <div class="member-position">Oficial III</div>
-                            <div class="member-role">Ayudante de investigación</div>
-                            <div class="member-interests">
-                                <span>Denuncias</span>
-                                <span>Robos</span>
-                                <span>Homicidios</span>
-                            </div>
-                        </div>
-                    </article>
-                
                     <article class="card member-card">
                         <div class="card-content">
                             <div class="member-img">
@@ -220,32 +270,13 @@
                             <div class="member-position">Oficial II</div>
                             <div class="member-role">Ayudante de investigación</div>
                             <div class="member-interests">
-                                <span>Cotejación de datos</span>
-                            </div>
-                        </div>
-                    </article>
-                </div>
-
-                <div class="cards-row row-4">
-
-
-                    <article class="card member-card">
-                        <div class="card-content">
-                            <div class="member-img">
-                                <img src="./assets/images/miembros/Aiden_Murphy.png" alt="Aiden Murphy">
-                                <div class="member-plate">323</div>
-                            </div>
-
-                            <div class="member-name">Aiden Murphy</div>
-                            <div class="member-position">Oficial I</div>
-                            <div class="member-role">Ayudante de investigación</div>
-                            <div class="member-interests">
-                                <span>Cotejación de datos</span>
+                                <span>Narcóticos</span>
                                 <span>Denuncias</span>
-                                <span>HVTU</span>
+                                <span>Cotejación de datos</span>
                             </div>
                         </div>
                     </article>
+
                     <article class="card member-card">
                         <div class="card-content">
                             <div class="member-img">
@@ -255,13 +286,43 @@
 
                             <div class="member-name">Francisco Gómez</div>
                             <div class="member-position">Oficial I</div>
+                            <div class="member-role">Ausencia</div>
+                            <div class="member-interests">
+                                <span>Narcóticos</span>
+                            </div>
+                        </div>
+                    </article>
+                    <article class="card member-card">
+                        <div class="card-content">
+                            <div class="member-img">
+                                <img src="./assets/images/miembros/Eleanor_McKenzie.png" alt="Eleanor McKenzie">
+                                <div class="member-plate">331</div>
+                            </div>
+
+                            <div class="member-name">Eleanor McKenzie</div>
+                            <div class="member-position">Oficial I</div>
                             <div class="member-role">Ayudante de investigación</div>
                             <div class="member-interests">
                                 <span>Narcóticos</span>
                             </div>
                         </div>
                     </article>
-     
+
+                     <article class="card member-card">
+                        <div class="card-content">
+                            <div class="member-img">
+                                <img src="./assets/images/miembros/Tyler_Harrington.png" alt="Tyler Harrington">
+                                <div class="member-plate">359</div>
+                            </div>
+
+                            <div class="member-name">Tyler Harrington</div>
+                            <div class="member-position">Oficial I</div>
+                            <div class="member-role">Ayudante de investigación</div>
+                            <div class="member-interests">
+                                <span>HVTU</span>
+                            </div>
+                        </div>
+                    </article>
                 </div>
             </section>
         </main>

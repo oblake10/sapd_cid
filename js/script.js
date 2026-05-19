@@ -1,9 +1,11 @@
 import { auth } from "./firebase-config.js";
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
-
+import {
+  onAuthStateChanged,
+  signOut
+} from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 const links = document.querySelectorAll(".cid-nav__link");
 const light = document.querySelector(".cid-nav__light");
-
+const authNavBtn = document.getElementById("authNavBtn");
 let navInitialized = false;
 
 function redirectToLogin() {
@@ -23,6 +25,8 @@ function moveLight(linkElement) {
 
   light.style.left = `${left}px`;
 }
+
+
 
 function initNav() {
   if (navInitialized) return;
@@ -49,11 +53,31 @@ function initNav() {
   });
 }
 
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, async (user) => {
   if (!user) {
-    redirectToLogin();
+    window.location.href = "login.html";
     return;
   }
 
   initNav();
+
+  if (authNavBtn) {
+    const username = user.email?.split("@")[0] || "Usuario";
+
+    authNavBtn.textContent = username;
+
+    authNavBtn.onclick = async () => {
+      await signOut(auth);
+      window.location.href = "login.html";
+    };
+  }
+
+  requestAnimationFrame(() => {
+    const active = document.querySelector(".cid-nav__link.active");
+    if (active) {
+      moveLight(active);
+    }
+
+    document.body.classList.remove("auth-loading");
+  });
 });

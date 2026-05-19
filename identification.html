@@ -10,40 +10,46 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap"
     rel="stylesheet" />
-
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="css/identification.css" />
   <link rel="icon" type="image/png" href="assets/logos/logo.png" />
-<script type="text/javascript" src="https://gc.kis.v2.scr.kaspersky-labs.com/FD126C42-EBFA-4E12-B309-BB3FDD723AC1/main.js?attr=akGcI21HzeMgIzKyleLL-HIpwcVjAW0AOe6dfeBBLnTr-PVzZ_5rax1UESP7zBq0KEe6ttOFPKjlUswZYnowkZ3zqdqSndVaddO54D-bpq4js43_g4nJTBirjcno20K7DGRKevEi2Q-4dsUo-Wxr5tlJZpMNQ6t_BYFboKif8cfIs2R2r2OV8SMZspKEGfVG_FuY-JLyzJasY977n391hueBYz3NS6vDbet8buxW5TRZ2DmOOF4aXPdlGkctF_k2qOfQaItf5Ysm95L1xiBKAg" charset="UTF-8"></script></head>
+</head>
 
-<body>
+<body class="auth-loading">
   <div class="app-shell">
     <header class="topbar">
-      <nav class="cid-nav">
-        <ul class="cid-nav__links">
-          <li class="cid-nav__link">
-            <a href="index.html">Inicio</a>
-          </li>
-          <li class="cid-nav__link active">
-            <a href="identification.html">Identificación Criminal</a>
-          </li>
-          <li class="cid-nav__link">
-            <a href="map.html">Mapa Criminal</a>
-          </li>
+  <nav class="cid-nav">
+    <ul class="cid-nav__links">
+      <li class="cid-nav__link ">
+        <a href="index.html">Inicio</a>
+      </li>
 
-          <span class="cid-nav__light"></span>
-        </ul>
-      </nav>
-    </header>
+      <li class="cid-nav__link active">
+        <a href="identification.html">Identificación Criminal</a>
+      </li>
+
+      <li class="cid-nav__link">
+        <a href="map.html">Mapa Criminal</a>
+      </li>
+
+      <li class="cid-nav__user">
+        <button id="authNavBtn" class="auth-nav-btn" type="button">
+          Login
+        </button>
+      </li>
+
+      <span class="cid-nav__light"></span>
+    </ul>
+  </nav>
+</header>
 
     <main class="identification-layout">
-      <section class="page-hero panel">
+      <section class="page-hero panel hero-upgraded">
+  <div class="hero-fingerprint" aria-hidden="true"></div>
         <div>
           <div class="page-hero__eyebrow">CID</div>
           <h1>Identificación Criminal</h1>
-          <p>
-            Galería de grupos criminales guardados en base de datos, con sus colores, zona,
-            vista aérea y archivo fotográfico anclado a cada organización.
-          </p>
+  
         </div>
 
         <div class="page-hero__tools">
@@ -52,95 +58,11 @@
         </div>
       </section>
 
-      <section id="emptyState" class="panel empty-state hidden">
-        <h2>No hay grupos guardados</h2>
-        <p>Cuando existan organizaciones en <b>criminalOrganizations</b>, aparecerán aquí automáticamente.</p>
-      </section>
-
       <section id="groupsGrid" class="groups-grid"></section>
     </main>
   </div>
-
-  <template id="groupCardTemplate">
-    <article class="panel group-card">
-      <div class="group-card__header">
-        <div>
-          <div class="group-card__eyebrow">Grupo criminal</div>
-          <h2 class="group-name"></h2>
-        </div>
-        <div class="group-color-chip"></div>
-      </div>
-
-      <div class="group-meta">
-        <div class="meta-item">
-          <span class="meta-label">Color principal</span>
-          <div class="meta-color-row">
-            <span class="color-preview color-preview--primary"></span>
-            <span class="group-primary-label"></span>
-          </div>
-        </div>
-
-        <div class="meta-item">
-          <span class="meta-label">Color secundario</span>
-          <div class="meta-color-row">
-            <span class="color-preview color-preview--secondary"></span>
-            <span class="group-secondary-label"></span>
-          </div>
-        </div>
-
-        <div class="meta-item meta-item--location">
-          <span class="meta-label">Ubicación</span>
-          <span class="group-location"></span>
-        </div>
-      </div>
-
-      <div class="zone-previews">
-        <figure class="zone-card">
-          <figcaption>Zona en mapa</figcaption>
-          <div class="zone-preview zone-preview--streets"></div>
-        </figure>
-
-        <figure class="zone-card">
-          <figcaption>Foto aérea de zona</figcaption>
-          <div class="zone-preview zone-preview--satellite"></div>
-        </figure>
-      </div>
-
-      <section class="upload-box">
-        <div class="upload-box__header">
-          <h3>Subir foto al grupo</h3>
-          <p>Ancla la imagen directamente a esta organización.</p>
-        </div>
-
-        <div class="upload-form">
-          <input class="caption-input" type="text" maxlength="120" placeholder="Pie de foto" />
-          <input class="file-input" type="file" accept="image/*" />
-          <button class="upload-btn" type="button">Subir foto</button>
-        </div>
-
-        <div class="upload-status"></div>
-      </section>
-
-      <section class="gallery-section">
-        <div class="gallery-section__header">
-          <h3>Galería de fotos</h3>
-          <span class="gallery-count"></span>
-        </div>
-
-        <div class="gallery-grid"></div>
-        <div class="gallery-empty hidden">Este grupo todavía no tiene fotos subidas.</div>
-      </section>
-    </article>
-  </template>
-
-  <template id="galleryItemTemplate">
-    <figure class="gallery-item">
-      <img class="gallery-image" alt="Imagen de organización criminal" loading="lazy" />
-      <figcaption class="gallery-caption"></figcaption>
-    </figure>
-  </template>
-
-  <script type="module" src="js/identification.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script type="module" src="js/identification.js"></script>
 </body>
 
 </html>
