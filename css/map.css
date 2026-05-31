@@ -30,7 +30,7 @@ body {
     radial-gradient(circle at 20% 20%, rgba(0, 10, 19, 0.15), transparent 25%),
     radial-gradient(circle at 80% 30%, rgba(7, 15, 19, 0.12), transparent 30%),
     radial-gradient(circle at 50% 80%, rgba(0, 18, 53, 0.18), transparent 35%),
-    linear-gradient(180deg, #060708 0%, #0e1116 40%, #000000 100%);
+    linear-gradient(180deg, #000000 0%, #080808 40%, #000000 100%);
 }
 
 body {
@@ -519,6 +519,85 @@ input {
   flex-shrink: 0;
 }
 
+.map-panel::before {
+  content: "";
+  position: absolute;
+  top: -60px;
+  left: -60px;
+  width: 320px;
+  height: 320px;
+
+  background: radial-gradient(
+    circle,
+    rgba(0, 217, 255, 0.12) 0%,
+    transparent 65%
+  );
+
+  pointer-events: none;
+}
+
+.map-panel::after {
+  content: "";
+  position: absolute;
+
+  top: 0;
+  left: 52px;
+  right: 52px;
+
+  height: 2px;
+
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(0, 217, 255, 0.6) 20%,
+    rgba(0, 217, 255, 0.6) 80%,
+    transparent
+  );
+
+  border-radius: 0 0 999px 999px;
+}
+
+.map-panel__grid-lines {
+  position: absolute;
+  inset: 0;
+
+  background-image:
+    linear-gradient(
+      rgba(255,255,255,0.028) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      rgba(255,255,255,0.028) 1px,
+      transparent 1px
+    );
+
+  background-size: 36px 36px;
+  pointer-events: none;
+}
+
+.map-panel__eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  color: #00d9ff;
+  font-size: .78rem;
+  font-weight: 800;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+}
+
+.map-panel__header h1 {
+  margin: 8px 0 0;
+
+  font-size: clamp(2.8rem, 4vw, 4.5rem);
+  font-weight: 800;
+  letter-spacing: -0.05em;
+
+  color: white;
+}
+
 .map-style-switcher {
   display: flex;
   align-items: center;
@@ -896,3 +975,32 @@ input {
 .auth-nav-btn:hover {
   transform: translateY(-2px);
 }
+
+.map-title-accent {
+  background: linear-gradient(
+    135deg,
+    #00d9ff 0%,
+    #7b8fff 100%
+  );
+
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.map-panel {
+  position: relative;
+}
+
+.map-panel__grid-lines,
+.map-panel::before,
+.map-panel::after {
+  z-index: 0;
+}
+
+.map-panel__header,
+.map-canvas {
+  position: relative;
+  z-index: 1;
+}
+

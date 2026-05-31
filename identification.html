@@ -10,59 +10,83 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap"
     rel="stylesheet" />
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="css/identification.css" />
+  <link rel="stylesheet" href="css/identification.local.css" />
   <link rel="icon" type="image/png" href="assets/logos/logo.png" />
 </head>
 
 <body class="auth-loading">
   <div class="app-shell">
     <header class="topbar">
-  <nav class="cid-nav">
-    <ul class="cid-nav__links">
-      <li class="cid-nav__link ">
-        <a href="index.html">Inicio</a>
-      </li>
+      <nav class="cid-nav">
+        <ul class="cid-nav__links">
+          <li class="cid-nav__link ">
+            <a href="index.html">Inicio</a>
+          </li>
 
-      <li class="cid-nav__link active">
-        <a href="identification.html">Identificación Criminal</a>
-      </li>
+          <li class="cid-nav__link active">
+            <a href="identification.html">Identificación Criminal</a>
+          </li>
 
-      <li class="cid-nav__link">
-        <a href="map.html">Mapa Criminal</a>
-      </li>
+          <li class="cid-nav__link">
+            <a href="map.html">Mapa Criminal</a>
+          </li>
 
-      <li class="cid-nav__user">
-        <button id="authNavBtn" class="auth-nav-btn" type="button">
-          Login
-        </button>
-      </li>
+          <li class="cid-nav__user">
+            <button id="authNavBtn" class="auth-nav-btn" type="button">
+              Login
+            </button>
+          </li>
 
-      <span class="cid-nav__light"></span>
-    </ul>
-  </nav>
-</header>
+          <span class="cid-nav__light"></span>
+        </ul>
+      </nav>
+    </header>
 
     <main class="identification-layout">
-      <section class="page-hero panel hero-upgraded">
-  <div class="hero-fingerprint" aria-hidden="true"></div>
-        <div>
-          <div class="page-hero__eyebrow">CID</div>
-          <h1>Identificación Criminal</h1>
-  
-        </div>
+      <section class="page-hero criminal-hero">
+  <div class="page-hero__grid-lines" aria-hidden="true"></div>
 
-        <div class="page-hero__tools">
-          <input id="searchInput" class="search-input" type="search" placeholder="Buscar grupo..." />
-          <div id="summaryPill" class="summary-pill">Cargando grupos...</div>
-        </div>
-      </section>
+  <div class="page-hero__body">
+    <div class="page-hero__eyebrow">
+      <span class="page-hero__dot"></span>
+      CID — Criminal Investigation Division
+    </div>
+
+    <h1 class="page-hero__title">
+      Identificación<br><em>criminal</em>
+    </h1>
+
+    <p class="page-hero__desc">
+      Registro visual de grupos criminales, colores, grafitis, miembros,
+      ubicaciones y actividad detectada por la unidad.
+    </p>
+  </div>
+
+<div class="page-hero__tools old-search-box">
+  <div class="search-row">
+    <input id="searchInput" class="search-input" type="search"
+      placeholder="Buscar grupo criminal..."
+      aria-label="Buscar grupo"
+      autocomplete="off" />
+
+<button id="searchBtn" class="search-btn" type="button" aria-label="Buscar">
+  🔍
+</button>
+  </div>
+
+  <div id="autocompleteList" class="summary-pill suggestion-panel">
+    Escribe para ver sugerencias...
+  </div>
+</div>
+</section>
 
       <section id="groupsGrid" class="groups-grid"></section>
     </main>
   </div>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script type="module" src="js/identification.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script type="module" src="js/identification.js"></script>
 </body>
 
 </html>

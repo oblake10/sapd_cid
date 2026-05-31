@@ -27,6 +27,8 @@ const mapStyleConfig = {
 
 const authNavBtn = document.getElementById("authNavBtn");
 const searchInput = document.getElementById("searchInput");
+const searchBtn = document.getElementById("searchBtn");
+const autocompleteList = document.getElementById("autocompleteList");
 const groupsGrid = document.getElementById("groupsGrid");
 const summaryPill = document.getElementById("summaryPill");
 
@@ -231,14 +233,32 @@ function destroyRenderedMaps() {
   renderedMaps = [];
 }
 
+function hexToRGB(hex) {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : "255, 247, 0";
+}
+
 function buildGroupCard(org) {
   const card = document.createElement("article");
   card.className = "group-card";
-  card.style.setProperty("--primary-color", org.primaryColor || "#34d6ff");
-  card.style.setProperty("--secondary-color", org.secondaryColor || "#9c7dff");
+  const primaryColor = org.primaryColor || "#FFF700";
+  const secondaryColor = org.secondaryColor || "#FFFFFF";
+  const black = "#000000";
+
+  card.style.setProperty("--group-primary-color", primaryColor);
+  card.style.setProperty("--group-secondary-color", secondaryColor);
+  card.style.setProperty("--group-primary-rgb", hexToRGB(primaryColor));
+  card.style.setProperty("--group-secondary-rgb", hexToRGB(secondaryColor));
+  card.style.setProperty("--black", hexToRGB(black));
 
   const locationText = getApproximateLocation(org.points);
   const photos = Array.isArray(org.photos) ? org.photos : [];
+  const firstPhoto = photos[0] || null;
+  const hasMembers = Array.isArray(org.members) && org.members.length > 0;
+  const noMembersWarning = !hasMembers ? '<div class="empty-state" style="margin-bottom:12px;">No hay miembros registrados.</div>' : '';
+
+  const primaryColorName = getColorName(org.primaryColor || '');
+  const secondaryColorName = getColorName(org.secondaryColor || '');
 
   card.innerHTML = `
    <div class="group-card__header group-card__header--premium">
@@ -250,9 +270,18 @@ function buildGroupCard(org) {
     "
   >
 
-    <h2>${escapeHtml(org.name)}</h2>
+    <div class="group-name-card-grid">
+      <div class="group-name-card__panel group-name-card__panel--info">
+       <div class="group-name-card__top">
+  <span>
+    Peligrosidad: ${escapeHtml(getDangerLabel(org))} 
+    | Miembros: ${escapeHtml(String((Array.isArray(org.members) ? org.members.length : 0) || org.memberCount || 0))}
+  </span>
+</div>
 
-    <div class="group-badges">
+        <h2>${escapeHtml(org.name)}</h2>
+
+        <div class="group-badges">
       <div class="color-badge">
         <span 
           class="color-dot" 
@@ -269,75 +298,122 @@ function buildGroupCard(org) {
         <span>Secundario</span>
       </div>
     </div>
+
+   
+      </div>
+
+      <div class="group-name-card__panel group-name-card__panel--media">
+        <div class="group-header-stats">
+          ${renderStatusBadge(org)}
+        </div>
+
+        ${firstPhoto ? `
+          <div class="group-graffiti-full">
+            <img src="${escapeAttribute(firstPhoto.url || '')}" alt="Grafiti" />
+          </div>
+        ` : `
+          <div class="group-graffiti-empty">Sin grafiti disponible</div>
+        `}
+      </div>
+    </div>
   </div>
 </div>
 
-   
     <div class="group-content">
-      <div class="group-left">
-        <section class="block-card">
-          <h3>Ubicación visual</h3>
+      <section class="block-card">
+        <h3>Ubicación</h3>
 
-          <div class="map-preview-grid">
-            <div class="map-preview">
-              <div class="map-preview__title">Zona foto mapa</div>
-              <div id="zone-map-${org.id}" class="map-canvas"></div>
-            </div>
-
-            <div class="map-preview">
-              <div class="map-preview__title">Foto aérea de zona</div>
-              <div id="satellite-map-${org.id}" class="map-canvas"></div>
-            </div>
+        <div class="map-preview-grid">
+          <div class="map-preview">
+            <div class="map-preview__title">Mapa territorial</div>
+            <div id="zone-map-${org.id}" class="map-canvas"></div>
           </div>
-        </section>
 
-        <section class="block-card">
-          <h3>Añadir foto al grupo</h3>
+          <div class="map-preview">
+            <div class="map-preview__title">Mapa de actividad</div>
+            <div id="satellite-map-${org.id}" class="map-canvas"></div>
+          </div>
+        </div>
+      </section>
 
-          <form class="upload-form" data-org-id="${escapeHtml(org.id)}">
-            <textarea
-              class="caption-input"
-              name="caption"
-              placeholder="Escribe un pie de foto..."
-            ></textarea>
+      <section class="block-card">
+        <h3>Galería de fotos</h3>
 
-            <div class="upload-row">
-              
-              <input
-                id="file-${org.id}"
-                class="hidden-input file-input"
-                type="file"
-                name="image"
-                accept="image/*"
-              />
-              <button class="upload-btn" type="submit">
-  <span>⬆</span>
-  Subir foto
-</button>
-            </div>
+    <div class="photo-gallery-viewer" data-photo-viewer>
+  <div class="photo-gallery-bg" data-gallery-bg></div>
 
-           
-          </form>
-        </section>
-      </div>
+  <button class="photo-gallery-arrow photo-gallery-arrow--prev" type="button" data-carousel-prev>
+    ‹
+  </button>
 
-      <div class="group-right">
-       <section class="block-card">
-  <h3>Galería de fotos</h3>
-
-  <div class="photo-carousel">
-    <button class="carousel-btn carousel-btn--prev" type="button" data-carousel-prev>‹</button>
-
-    <div class="gallery-grid" data-gallery></div>
-
-    <button class="carousel-btn carousel-btn--next" type="button" data-carousel-next>›</button>
+  <div class="photo-gallery-main">
+    <img data-gallery-main-img src="" alt="Foto principal" />
   </div>
-</section>
-      </div>
+
+  <button class="photo-gallery-arrow photo-gallery-arrow--next" type="button" data-carousel-next>
+    ›
+  </button>
+
+  <div class="photo-gallery-info">
+    <strong data-gallery-title></strong>
+    <span data-gallery-date></span>
+  </div>
+
+  <div class="photo-gallery-thumbs" data-gallery></div>
+</div>
+
+        <div class="upload-photo-block" style="display:flex; justify-content:center; margin-top:18px;">
+          <input
+            id="file-${org.id}"
+            class="hidden-input file-input"
+            type="file"
+            name="image"
+            accept="image/*"
+            style="display:none;"
+          />
+          <button class="upload-btn" type="button" data-action="pick-photo">
+            <span> </span>
+            Subir foto
+          </button>
+        </div>
+      </section>
+
+      <section class="block-card">
+        <h3>Miembros del grupo</h3>
+        ${noMembersWarning}
+
+       <div class="members-carousel">
+  <button class="members-carousel-btn members-carousel-btn--prev" type="button" data-members-prev>‹</button>
+
+  <div class="members-grid">
+    ${renderMembersGrid(org)}
+  </div>
+
+  <button class="members-carousel-btn members-carousel-btn--next" type="button" data-members-next>›</button>
+  
+</div>
+<div class="members-actions">
+  <button class="upload-btn" type="button" data-action="add-member">Añadir miembro</button>
+</div>
+      </section>
     </div>
   `;
 
   const gallery = card.querySelector("[data-gallery]");
+  const membersGrid = card.querySelector(".members-grid");
+  const addMemberBtn = card.querySelector("[data-action='add-member']");
+
+  addMemberBtn?.addEventListener("click", () => {
+    openAddMemberModal(org, card, membersGrid);
+  });
+
+  const filterButtons = card.querySelectorAll("[data-filter]");
+  filterButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const filter = btn.getAttribute("data-filter");
+      applyMemberFilter(membersGrid, org, filter);
+    });
+  });
 
   if (!photos.length) {
     gallery.appendChild(
@@ -350,166 +426,373 @@ function buildGroupCard(org) {
       return bTime - aTime;
     });
 
-orderedPhotos.forEach((photo) => {
-  const photoCard = document.createElement("article");
-  photoCard.className = "photo-card";
+    let activePhotoIndex = 0;
 
-  const caption = photo.caption?.trim() || "Sin pie de foto";
-  const uploadedAt = formatTimestamp(photo.uploadedAt);
-const adminEmails = [
-  "callahan@cid.com"
-];
+    const viewer = card.querySelector("[data-photo-viewer]");
+    const bg = card.querySelector("[data-gallery-bg]");
+    const mainImg = card.querySelector("[data-gallery-main-img]");
+    const title = card.querySelector("[data-gallery-title]");
+    const date = card.querySelector("[data-gallery-date]");
 
-const isAdmin = adminEmails.includes(auth.currentUser?.email);
+    function setActivePhoto(index) {
+      activePhotoIndex = index;
 
-photoCard.innerHTML = `
-  <div class="photo-card__image-wrap">
+      const photo = orderedPhotos[activePhotoIndex];
+      if (!photo) return;
 
-    ${isAdmin ? `
-      <button class="photo-delete-btn" type="button">
-        ✕
-      </button>
-    ` : ""}
+      const caption = photo.caption?.trim() || "Sin pie de foto";
+      const uploadedAt = formatTimestamp(photo.uploadedAt);
+      const photoUrl = photo.url || "";
 
+      bg.style.backgroundImage = `url("${photoUrl}")`;
+      mainImg.src = photoUrl;
+      mainImg.alt = caption;
+      title.textContent = caption;
+      date.textContent = uploadedAt;
+
+      gallery.querySelectorAll(".photo-thumb").forEach((thumb, thumbIndex) => {
+        thumb.classList.toggle("is-active", thumbIndex === activePhotoIndex);
+      });
+    }
+
+    orderedPhotos.forEach((photo, index) => {
+      const thumb = document.createElement("button");
+      thumb.className = "photo-thumb";
+      thumb.type = "button";
+
+      const caption = photo.caption?.trim() || "Sin pie de foto";
+
+      thumb.innerHTML = `
     <img 
       src="${escapeAttribute(photo.url || "")}" 
       alt="${escapeAttribute(caption)}" 
     />
-  </div>
+  `;
 
-  <div class="photo-card__body">
-    <div class="photo-card__caption">${escapeHtml(caption)}</div>
-    <div class="photo-card__date">${escapeHtml(uploadedAt)}</div>
-  </div>
-`;
+      thumb.addEventListener("click", () => {
+        setActivePhoto(index);
+      });
 
-const deleteBtn = photoCard.querySelector(".photo-delete-btn");
-
-deleteBtn?.addEventListener("click", async () => {
-  const confirmed = confirm("¿Eliminar esta foto de la galería?");
-
-  if (!confirmed) return;
-
-  try {
-    await updateDoc(doc(db, "criminalOrganizations", org.id), {
-      photos: arrayRemove(photo)
+      gallery.appendChild(thumb);
     });
 
-    setStatus("Foto eliminada correctamente.", "is-success");
+    setActivePhoto(0);
 
-  } catch (error) {
-    console.error(error);
+    const prevBtn = card.querySelector("[data-carousel-prev]");
+    const nextBtn = card.querySelector("[data-carousel-next]");
 
-    setStatus(
-      "No se pudo eliminar la foto.",
-      "is-error"
-    );
-  }
-});
-  gallery.appendChild(photoCard);
-});
+    prevBtn?.addEventListener("click", () => {
+      const nextIndex =
+        activePhotoIndex === 0 ? orderedPhotos.length - 1 : activePhotoIndex - 1;
 
-const prevBtn = card.querySelector("[data-carousel-prev]");
-const nextBtn = card.querySelector("[data-carousel-next]");
+      setActivePhoto(nextIndex);
+    });
 
-prevBtn?.addEventListener("click", () => {
-  gallery.scrollBy({
-    left: -gallery.clientWidth,
-    behavior: "smooth"
-  });
-});
+    nextBtn?.addEventListener("click", () => {
+      const nextIndex =
+        activePhotoIndex === orderedPhotos.length - 1 ? 0 : activePhotoIndex + 1;
 
-nextBtn?.addEventListener("click", () => {
-  gallery.scrollBy({
-    left: gallery.clientWidth,
-    behavior: "smooth"
-  });
-});
+      setActivePhoto(nextIndex);
+    });
   }
 
-  const form = card.querySelector(".upload-form");
   const fileInput = card.querySelector(".file-input");
-  const fileNameBox = card.querySelector("[data-file-name]");
-  const uploadBtn = card.querySelector(".upload-btn");
+  const uploadBtn = card.querySelector("[data-action='pick-photo']");
 
-  fileInput?.addEventListener("change", () => {
-    const file = fileInput.files?.[0];
-    fileNameBox.textContent = file
-      ? `Archivo seleccionado: ${file.name}`
-      : "No se ha seleccionado ningún archivo.";
+  uploadBtn?.addEventListener("click", () => {
+    fileInput?.click();
   });
 
-  form?.addEventListener("submit", async (event) => {
-    event.preventDefault();
-
-    const file = fileInput?.files?.[0];
-    const caption = form.querySelector("[name='caption']")?.value?.trim() || "";
-
-    if (!file) {
-      setStatus("Debes seleccionar una imagen antes de subirla.", "is-error");
-      return;
-    }
+  fileInput?.addEventListener("change", async () => {
+    const file = fileInput.files?.[0];
+    if (!file) return;
 
     if (file.size > 4 * 1024 * 1024) {
-      setStatus(
-        "La imagen es demasiado grande. Usa una imagen de menos de 4MB.",
-        "is-error"
-      );
-      return;
-    }
-    if (!file) {
-      setStatus("Debes seleccionar una imagen antes de subirla.", "is-error");
+      setStatus("La imagen es demasiado grande. Usa una imagen de menos de 4MB.", "is-error");
+      fileInput.value = "";
       return;
     }
 
-    uploadBtn.disabled = true;
-    uploadBtn.textContent = "Subiendo...";
+    openPhotoCaptionModal(org, file, fileInput, uploadBtn);
+  });
 
-    try {
-      await uploadPhotoForOrganization(org, file, caption);
-      setStatus(`Foto subida correctamente al grupo ${org.name}.`, "is-success");
-      form.reset();
-      fileNameBox.textContent = "No se ha seleccionado ningún archivo.";
-    } catch (error) {
-      console.error(error);
-      setStatus(
-        `No se pudo subir la foto al grupo ${org.name}. Revisa Firebase Storage y los permisos.`,
-        "is-error"
-      );
-    } finally {
-      uploadBtn.disabled = false;
-      uploadBtn.textContent = "Subir foto";
-    }
+  bindMemberCardActions(membersGrid, org);
+
+  const membersPrevBtn = card.querySelector("[data-members-prev]");
+  const membersNextBtn = card.querySelector("[data-members-next]");
+
+  function getCardStep() {
+    const firstCard = membersGrid.querySelector(".member-card");
+    if (!firstCard) return 0;
+
+    const styles = getComputedStyle(membersGrid);
+    const gap = parseFloat(styles.columnGap || styles.gap || 0);
+
+    return firstCard.getBoundingClientRect().width + gap;
+  }
+
+  membersNextBtn?.addEventListener("click", () => {
+    membersGrid.scrollBy({
+      left: getCardStep(),
+      behavior: "smooth"
+    });
+  });
+
+  membersPrevBtn?.addEventListener("click", () => {
+    membersGrid.scrollBy({
+      left: -getCardStep(),
+      behavior: "smooth"
+    });
   });
 
   return card;
 }
 
+function openPhotoCaptionModal(org, file, fileInput, uploadBtn) {
+  const modal = document.createElement("div");
+  modal.className = "member-modal-overlay";
+  modal.style.setProperty("--group-primary-color", org.primaryColor || "#FFF700");
+  modal.style.setProperty("--group-primary-rgb", hexToRGB(org.primaryColor || "#FFF700"));
+
+  modal.innerHTML = `
+    <div class="member-modal">
+      <div class="member-modal__header">
+        <h2>Subir foto</h2>
+        <button type="button" class="member-modal__close">×</button>
+      </div>
+
+      <div class="member-modal__body">
+        <label class="member-modal__field">
+          <span>Pie de foto</span>
+          <input name="caption" type="text" placeholder="Ej: Grafiti visto en la zona..." />
+        </label>
+      </div>
+
+      <div class="member-modal__actions">
+        <button type="button" class="member-modal__cancel">Cancelar</button>
+        <button type="button" class="member-modal__save">Subir</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  const captionInput = modal.querySelector("[name='caption']");
+  const saveBtn = modal.querySelector(".member-modal__save");
+
+  const closeModal = () => {
+    fileInput.value = "";
+    modal.remove();
+  };
+
+  modal.querySelector(".member-modal__close")?.addEventListener("click", closeModal);
+  modal.querySelector(".member-modal__cancel")?.addEventListener("click", closeModal);
+
+  modal.addEventListener("click", (event) => {
+    if (event.target === modal) closeModal();
+  });
+
+  saveBtn?.addEventListener("click", async () => {
+    const caption = captionInput?.value.trim() || "";
+
+    if (!caption) {
+      setStatus("Introduce un pie de foto.", "is-error");
+      return;
+    }
+
+    saveBtn.disabled = true;
+    saveBtn.textContent = "Subiendo...";
+    uploadBtn.disabled = true;
+    uploadBtn.textContent = "Subiendo...";
+
+    try {
+      await uploadPhotoForOrganization(org, file, caption);
+
+      setStatus(`Foto subida correctamente al grupo ${org.name}.`, "is-success");
+      fileInput.value = "";
+      modal.remove();
+    } catch (error) {
+      console.error(error);
+
+      setStatus(
+        `No se pudo subir la foto al grupo ${org.name}. Revisa Firebase Storage y los permisos.`,
+        "is-error"
+      );
+
+      saveBtn.disabled = false;
+      saveBtn.textContent = "Subir";
+    } finally {
+      uploadBtn.disabled = false;
+      uploadBtn.textContent = "Subir foto";
+    }
+  });
+}
+
+function openAddMemberModal(org, card, membersGrid) {
+  openMemberModal({
+    org,
+    membersGrid,
+    mode: "add"
+  });
+}
+
+function openEditMemberModal(org, member) {
+  openMemberModal({
+    org,
+    member,
+    mode: "edit"
+  });
+}
+
+function openMemberModal({ org, member = null, membersGrid = null, mode = "add" }) {
+  const isEdit = mode === "edit";
+
+  const modal = document.createElement("div");
+  modal.className = "member-modal-overlay";
+  modal.style.setProperty("--group-primary-color", org.primaryColor || "#FFF700");
+  modal.style.setProperty("--group-primary-rgb", hexToRGB(org.primaryColor || "#FFF700"));
+
+  modal.innerHTML = `
+    <div class="member-modal">
+      <div class="member-modal__header">
+        <h2>${isEdit ? "Editar miembro" : "Añadir miembro"}</h2>
+        <button type="button" class="member-modal__close">×</button>
+      </div>
+
+      <div class="member-modal__body">
+        <label class="member-modal__field">
+          <span>Nombre</span>
+          <input name="firstName" type="text" value="${escapeAttribute(member?.firstName || member?.name || "")}" placeholder="Nombre y apellido" />
+        </label>
+
+        <label class="member-modal__field">
+          <span>State ID</span>
+          <input name="stateId" type="text" value="${escapeAttribute(member?.stateId || member?.id || "")}" placeholder="12345" />
+        </label>
+
+        <label class="member-modal__field">
+          <span>Foto (URL)</span>
+          <input name="photo" type="url" value="${escapeAttribute(member?.photo || "")}" placeholder="https://i.imgur.com/foto.png" />
+        </label>
+
+        <label class="member-modal__field">
+          <span>Red social</span>
+          <input name="social" type="text" value="${escapeAttribute(member?.social || "")}" placeholder="@usuario" />
+        </label>
+
+        <label class="member-modal__field">
+          <span>Grupo actual</span>
+          <input name="currentGroup" type="text" value="${escapeAttribute(member?.currentGroup || org.name || "")}" />
+        </label>
+
+        <label class="member-modal__field">
+          <span>Grupo anterior</span>
+          <input name="previousGroup" type="text" value="${escapeAttribute(member?.previousGroup || "—")}" />
+        </label>
+
+        <label class="member-modal__field">
+          <span>Cargo</span>
+          <input name="role" type="text" value="${escapeAttribute(member?.role || "Miembro")}" />
+        </label>
+
+        <label class="member-modal__field">
+          <span>Estado</span>
+          <select name="status">
+            <option value="Activo" ${member?.status === "Activo" ? "selected" : ""}>Activo</option>
+            <option value="No activo" ${member?.status === "No activo" ? "selected" : ""}>No activo</option>
+            <option value="Investigación" ${member?.status === "Investigación" ? "selected" : ""}>Investigación</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="member-modal__actions">
+        <button type="button" class="member-modal__cancel">Cancelar</button>
+        <button type="button" class="member-modal__save">${isEdit ? "Guardar cambios" : "Guardar"}</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  const closeModal = () => modal.remove();
+
+  modal.querySelector(".member-modal__close")?.addEventListener("click", closeModal);
+  modal.querySelector(".member-modal__cancel")?.addEventListener("click", closeModal);
+
+  modal.addEventListener("click", (event) => {
+    if (event.target === modal) closeModal();
+  });
+
+  const saveBtn = modal.querySelector(".member-modal__save");
+
+  saveBtn?.addEventListener("click", async () => {
+    const updatedMember = {
+      firstName: modal.querySelector("[name='firstName']")?.value.trim() || "",
+      stateId: modal.querySelector("[name='stateId']")?.value.trim() || "",
+      photo: modal.querySelector("[name='photo']")?.value.trim() || "",
+      social: modal.querySelector("[name='social']")?.value.trim() || "-",
+      currentGroup: modal.querySelector("[name='currentGroup']")?.value.trim() || org.name || "-",
+      previousGroup: modal.querySelector("[name='previousGroup']")?.value.trim() || "—",
+      role: modal.querySelector("[name='role']")?.value.trim() || "Miembro",
+      status: modal.querySelector("[name='status']")?.value || "Activo"
+    };
+
+    if (!updatedMember.firstName || !updatedMember.stateId) {
+      setStatus("Completa nombre y State ID.", "is-error");
+      return;
+    }
+
+    saveBtn.disabled = true;
+    saveBtn.textContent = isEdit ? "Guardando..." : "Añadiendo...";
+
+    try {
+      if (isEdit && member) {
+        await updateDoc(doc(db, "criminalOrganizations", org.id), {
+          members: arrayRemove(member)
+        });
+
+        await updateDoc(doc(db, "criminalOrganizations", org.id), {
+          members: arrayUnion(updatedMember)
+        });
+
+        setStatus("Miembro editado correctamente.", "is-success");
+      } else {
+        await updateDoc(doc(db, "criminalOrganizations", org.id), {
+          members: arrayUnion(updatedMember)
+        });
+
+        setStatus(`Miembro agregado a ${org.name}.`, "is-success");
+      }
+
+      closeModal();
+    } catch (error) {
+      console.error(error);
+      setStatus("No se pudo guardar el miembro.", "is-error");
+      saveBtn.disabled = false;
+      saveBtn.textContent = isEdit ? "Guardar cambios" : "Guardar";
+    }
+  });
+}
+
 function renderOrganizations() {
   destroyRenderedMaps();
   groupsGrid.innerHTML = "";
+  const term = searchInput?.value || "";
 
-  const searchTerm = normalizeText(searchInput?.value || "");
-
-  const filteredOrganizations = organizations.filter((org) => {
-    if (!hasValidOrganizationName(org)) {
-      return false;
-    }
-
-    const name = normalizeText(org.name);
-    return name.includes(searchTerm);
-  });
+  const filteredOrganizations = term.trim() ? getOrgMatches(term) : organizations.filter(hasValidOrganizationName);
 
   setGroupCount(filteredOrganizations.length);
 
   if (!filteredOrganizations.length) {
     groupsGrid.appendChild(
-      createEmptyState("No hay grupos que coincidan con la búsqueda.")
+      createEmptyState("No se han encontrado resultados")
     );
     return;
   }
 
   const fragment = document.createDocumentFragment();
+
+
 
   filteredOrganizations.forEach((org) => {
     const card = buildGroupCard(org);
@@ -601,6 +884,23 @@ function renderGroupMaps(org) {
     satelliteMap.setView(center, initialZoom);
   }
 
+  const graffitiPoints = Array.isArray(org.graffiti) ? org.graffiti : Array.isArray(org.grafitis) ? org.grafitis : [];
+  graffitiPoints.forEach((graffiti) => {
+    const coords = firestorePointToLeaflet(graffiti.location || graffiti.point || graffiti);
+    if (!coords) return;
+
+    const marker = L.circleMarker(coords, {
+      radius: 8,
+      fillColor: org.primaryColor || '#34d6ff',
+      color: org.secondaryColor || '#ffffff',
+      weight: 2,
+      opacity: 1,
+      fillOpacity: 0.85
+    }).addTo(groupLayer2);
+
+    marker.bindPopup(`Grafiti: ${escapeHtml(graffiti.name || graffiti.tag || graffiti.caption || 'punto')}<br>${escapeHtml(graffiti.description || graffiti.detail || '')}`);
+  });
+
   setTimeout(() => {
     zoneMap.invalidateSize();
     satelliteMap.invalidateSize();
@@ -677,6 +977,7 @@ function listenOrganizations() {
       }
 
       renderOrganizations();
+      populateAutocomplete(searchInput?.value || "");
     },
     (error) => {
       console.error(error);
@@ -686,6 +987,34 @@ function listenOrganizations() {
       );
     }
   );
+}
+
+function populateAutocomplete(term) {
+  if (!autocompleteList) return;
+  const value = (term || "").toString().trim();
+
+  const matches = value ? getOrgMatches(value) : organizations.filter(hasValidOrganizationName);
+
+  autocompleteList.innerHTML = '';
+
+  if (!matches || !matches.length) {
+    autocompleteList.innerHTML = value
+      ? '<div class="autocomplete-empty">No se han encontrado resultados</div>'
+      : 'Sugerencias: ' + (organizations.map(o => o.name).join(', '));
+
+    return;
+  }
+
+  matches.forEach(org => {
+    const div = document.createElement('div');
+    div.setAttribute('data-suggestion', 'true');
+    div.setAttribute('data-value', org.name || '');
+    div.style.padding = '6px 8px';
+    div.style.cursor = 'pointer';
+    div.style.borderBottom = '1px solid rgba(255,255,255,0.04)';
+    div.innerHTML = `<strong style="color:var(--nav-glow)">${escapeHtml(org.name)}</strong> <span style="color:var(--muted); margin-left:8px">${escapeHtml((org.aliases || []).slice(0, 2).join(', '))}</span>`;
+    autocompleteList.appendChild(div);
+  });
 }
 function fileToBase64(file) {
   return new Promise((resolve, reject) => {
@@ -759,12 +1088,214 @@ function escapeAttribute(value) {
   return escapeHtml(value);
 }
 
+function joinOrList(value, fallback = '-') {
+  if (Array.isArray(value)) {
+    return value.length ? value.join(', ') : fallback;
+  }
+
+  if (typeof value === 'string' && value.trim()) return value;
+
+  return fallback;
+}
+
+function getDangerLabel(org) {
+  const level = org.danger || org.peligrosidad || org.dangerLevel || org.risk || "media";
+  const map = {
+    baja: "Baja",
+    baja0: "Baja",
+    media: "Media",
+    alta: "Alta",
+    critica: "Crítica",
+    crítica: "Crítica",
+    critical: "Crítica"
+  };
+
+  return map[String(level).toLowerCase()] || String(level);
+}
+
+function renderStatusBadge(org) {
+  const state = org.status || org.estado;
+  if (!state) return '';
+
+  const status = state.toString().toLowerCase();
+  let color = "#999";
+  let emoji = "⚪";
+
+  if (status.includes("activo")) {
+    color = "#38d98e"; emoji = "🟢";
+  } else if (status.includes("investig")) {
+    color = "#ffd621"; emoji = "🟡";
+  } else if (status.includes("no") || status.includes("inactivo")) {
+    color = "#ff5f6d"; emoji = "🔴";
+  }
+
+  return `<div style="display:flex; align-items:center; gap:8px; justify-content:flex-end"><div style="font-weight:900; color:${color}">${emoji}</div><div style="font-weight:800">${escapeHtml(String(state))}</div></div>`;
+}
+
+function renderMemberCard(org, m, index) {
+  const photo = m.photo || m.avatar || m.image || "assets/images/miembros/default.png";
+  const fullName = `${m.firstName || m.name || ""} ${m.lastName || m.surname || ""}`.trim() || "Sin nombre";
+  const stateId = m.stateId || m.id || m.stateID || "-";
+  const social = m.social || m.handle || m.twitter || m.red || "-";
+  const role = m.role || m.cargo || "Miembro";
+  const status = m.status || m.estado || "—";
+  const currentGroup = m.currentGroup || m.grupoActual || m.organizacion || org.abbreviation || org.code || org.name || "-";
+  const previousGroup = m.previousGroup || m.grupoAnterior || m.previous || "—";
+  const isActive = status.toLowerCase() === "activo";
+
+  return `
+    <article class="group-card member-card" data-member-index="${index}">
+      <div class="member-card__state-id">ID: ${escapeHtml(stateId)}</div>
+
+      <div class="member-card__actions">
+        <button class="member-action-btn member-action-btn--edit" type="button" data-action="edit-member" data-member-index="${index}">✏️</button>
+        <button class="member-action-btn member-action-btn--delete" type="button" data-action="delete-member" data-member-index="${index}">❌</button>
+      </div>
+
+      <div class="member-card__photo">
+        <img src="${escapeAttribute(photo)}" alt="${escapeAttribute(fullName)}" />
+      </div>
+
+      <div style="font-weight:800; margin-bottom:6px;">${escapeHtml(fullName)}</div>
+      <div style="font-size:0.9rem; color:var(--muted)">Red social: ${escapeHtml(social)}</div>
+      <div style="font-size:0.9rem; color:var(--muted)">Grupo actual: ${escapeHtml(currentGroup)}</div>
+      <div style="font-size:0.9rem; color:var(--muted)">Grupo anterior: ${escapeHtml(previousGroup)}</div>
+      <div style="font-size:0.9rem; color:var(--muted)">Cargo: ${escapeHtml(role)}</div>
+      <div style="margin-top:10px; font-weight:800; color:${isActive ? "#38d98e" : "#ff5f6d"}">${escapeHtml(status)}</div>
+    </article>
+  `;
+}
+function renderMembersGrid(org) {
+  const members = Array.isArray(org.members) ? org.members : [];
+  if (!members.length) return "";
+
+  return members.map((m, index) => renderMemberCard(org, m, index)).join("");
+}
+
+function bindMemberCardActions(membersGrid, org) {
+  if (!membersGrid) return;
+
+  membersGrid.onclick = (event) => {
+    const button = event.target.closest("[data-action]");
+    if (!button) return;
+
+    const index = Number(button.dataset.memberIndex);
+    const member = org.members?.[index];
+
+    if (!member) return;
+
+    if (button.dataset.action === "delete-member") {
+      deleteMember(org, member);
+    }
+
+    if (button.dataset.action === "edit-member") {
+      openEditMemberModal(org, member);
+    }
+  };
+}
+
+async function deleteMember(org, member) {
+  const name = member.firstName || member.name || "este miembro";
+  const confirmed = confirm(`¿Seguro que quieres eliminar a ${name}?`);
+
+  if (!confirmed) return;
+
+  try {
+    await updateDoc(doc(db, "criminalOrganizations", org.id), {
+      members: arrayRemove(member)
+    });
+
+    setStatus("Miembro eliminado correctamente.", "is-success");
+  } catch (error) {
+    console.error(error);
+    setStatus("No se pudo eliminar el miembro.", "is-error");
+  }
+}
+
+function applyMemberFilter(container, org, filter) {
+  const members = Array.isArray(org.members) ? org.members : [];
+
+  const filtered = members
+    .map((member, index) => ({ member, index }))
+    .filter(({ member }) => {
+      const status = (member.status || "").toString().toLowerCase();
+      const role = (member.role || member.cargo || "").toString().toLowerCase();
+
+      if (filter === "active") return status === "activo";
+      if (filter === "inactive") return status !== "activo";
+      if (filter === "camello") return role.includes("camell");
+      return true;
+    });
+
+  container.innerHTML = "";
+
+  if (!filtered.length) {
+    container.innerHTML = `<div class="empty-state">No hay miembros que coincidan con el filtro.</div>`;
+    return;
+  }
+
+  container.innerHTML = filtered
+    .map(({ member, index }) => renderMemberCard(org, member, index))
+    .join("");
+
+  bindMemberCardActions(container, org);
+}
+
+function getOrgMatches(term) {
+  const s = normalizeText(term || '');
+  if (!s) return [];
+
+  return organizations.filter(org => {
+    if (!hasValidOrganizationName(org)) return false;
+
+    const name = normalizeText(org.name);
+    if (name.includes(s)) return true;
+
+    const abbrev = normalizeText(org.abbreviation || org.code || org.abbr || '');
+    if (abbrev && abbrev.includes(s)) return true;
+
+    const aliases = Array.isArray(org.aliases) ? org.aliases : [];
+    for (const a of aliases) {
+      if (normalizeText(a).includes(s)) return true;
+    }
+
+    return false;
+  });
+}
+
 function initSearch() {
   if (!searchInput) return;
 
-  searchInput.addEventListener("input", () => {
-    renderOrganizations();
-  });
+  let debounceTimer = null;
+
+  const onInput = (e) => {
+    const value = e.target.value || "";
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      populateAutocomplete(value);
+      renderOrganizations();
+    }, 180);
+  };
+
+  searchInput.addEventListener("input", onInput);
+
+  if (searchBtn) {
+    searchBtn.addEventListener('click', () => {
+      populateAutocomplete(searchInput.value || '');
+      renderOrganizations();
+    });
+  }
+
+  if (autocompleteList) {
+    autocompleteList.addEventListener('click', (ev) => {
+      const el = ev.target.closest('[data-suggestion]');
+      if (!el) return;
+      const val = el.getAttribute('data-value') || el.textContent;
+      searchInput.value = val;
+      renderOrganizations();
+      autocompleteList.innerHTML = '';
+    });
+  }
 }
 
 onAuthStateChanged(auth, (user) => {
