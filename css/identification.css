@@ -389,7 +389,7 @@ input {
   min-width: min(100%, 520px);
   padding: 22px;
   border-radius: 18px;
-  background: rgba(10, 12, 18, 0.78);
+  background: #070707;
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
