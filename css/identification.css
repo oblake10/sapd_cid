@@ -1003,6 +1003,11 @@ input {
   object-fit: contain;
   display: block;
   background: #fff;
+  transition: filter 0.2s ease;
+}
+
+.photo-gallery-main img:hover {
+  filter: drop-shadow(0 0 12px rgba(208, 112, 0, 0.6)) brightness(1.08);
 }
 
 .photo-gallery-info {
@@ -1243,6 +1248,7 @@ input {
 }
 
 .member-action-btn--edit:hover { background: #2d8cff; }
+.member-action-btn--gallery:hover { background: #d97007; }
 .member-action-btn--delete:hover { background: #ff4444; }
 
 .member-card__photo {
