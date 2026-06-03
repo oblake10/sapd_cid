@@ -737,6 +737,27 @@ function openMemberModal({ org, member = null, membersGrid = null, mode = "add" 
       status: modal.querySelector("[name='status']")?.value || "Activo"
     };
 
+    // Ensure photos array includes initial photo so it appears in member gallery
+    const currentUserEmail = auth.currentUser?.email || "Usuario autenticado";
+    if (isEdit && member) {
+      // preserve existing photos if present, otherwise seed from photo field
+      updatedMember.photos = member.photos && member.photos.length ? member.photos : (updatedMember.photo ? [{
+        url: updatedMember.photo,
+        caption: "",
+        uploadedAt: new Date().toISOString(),
+        uploadedBy: currentUserEmail,
+        favorite: member?.photo === updatedMember.photo || true
+      }] : []);
+    } else {
+      updatedMember.photos = updatedMember.photo ? [{
+        url: updatedMember.photo,
+        caption: "",
+        uploadedAt: new Date().toISOString(),
+        uploadedBy: currentUserEmail,
+        favorite: true
+      }] : [];
+    }
+
     if (!updatedMember.firstName || !updatedMember.stateId) {
       setStatus("Completa nombre y State ID.", "is-error");
       return;
@@ -1148,8 +1169,9 @@ function renderMemberCard(org, m, index) {
       <div class="member-card__state-id">ID: ${escapeHtml(stateId)}</div>
 
       <div class="member-card__actions">
-        <button class="member-action-btn member-action-btn--edit" type="button" data-action="edit-member" data-member-index="${index}">✏️</button>
-        <button class="member-action-btn member-action-btn--delete" type="button" data-action="delete-member" data-member-index="${index}">❌</button>
+          <button class="member-action-btn member-action-btn--edit" type="button" data-action="edit-member" data-member-index="${index}">✏️</button>
+          <button class="member-action-btn member-action-btn--gallery" type="button" data-action="open-gallery" data-member-index="${index}">🖼️</button>
+          <button class="member-action-btn member-action-btn--delete" type="button" data-action="delete-member" data-member-index="${index}">❌</button>
       </div>
 
       <div class="member-card__photo">
@@ -1191,7 +1213,250 @@ function bindMemberCardActions(membersGrid, org) {
     if (button.dataset.action === "edit-member") {
       openEditMemberModal(org, member);
     }
+    
+    if (button.dataset.action === "open-gallery") {
+      openMemberGalleryModal(org, member, index, membersGrid);
+    }
   };
+}
+
+function openMemberGalleryModal(org, member, memberIndex, membersGrid) {
+  let photos = Array.isArray(member.photos) ? [...member.photos] : [];
+
+  // If member has a main `photo` field but it's not present in photos array, include it
+  if (member.photo && !photos.find(p => p.url === member.photo)) {
+    photos.unshift({
+      url: member.photo,
+      caption: '',
+      uploadedAt: member.uploadedAt || new Date().toISOString(),
+      uploadedBy: member.uploadedBy || auth.currentUser?.email || 'usuario',
+      favorite: true
+    });
+  } else {
+    // sync favorite flags with member.photo when available
+    photos = photos.map(p => ({ ...p, favorite: member.photo ? p.url === member.photo : !!p.favorite }));
+  }
+
+  const modal = document.createElement("div");
+  modal.className = "member-modal-overlay";
+  modal.style.setProperty("--group-primary-color", org.primaryColor || "#FFF700");
+  modal.style.setProperty("--group-primary-rgb", hexToRGB(org.primaryColor || "#FFF700"));
+
+  modal.innerHTML = `
+    <div class="member-modal" style="max-width:900px;">
+      <div class="member-modal__header">
+        <h2>Galería — ${escapeHtml(member.firstName || member.name || 'Miembro')}</h2>
+        <button type="button" class="member-modal__close">×</button>
+      </div>
+
+      <div class="member-modal__body">
+        <div class="photo-gallery-viewer" style="min-height:260px;">
+          <div class="photo-gallery-bg" data-gallery-bg></div>
+          <button class="photo-gallery-arrow photo-gallery-arrow--prev" type="button" data-gallery-prev>‹</button>
+          <div class="photo-gallery-main" style="width:360px; margin:0 auto; position:relative;">
+            <img data-gallery-main-img src="" alt="Foto principal" />
+          </div>
+          <button class="photo-gallery-arrow photo-gallery-arrow--next" type="button" data-gallery-next>›</button>
+          <div class="photo-gallery-thumbs" data-gallery style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap; max-height:200px; overflow:auto;"></div>
+        </div>
+
+        <div style="margin-top:16px; display:flex; gap:8px; align-items:center;">
+          <input name="photoUrl" type="url" placeholder="https://.../imagen.jpg" style="flex:1; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.08); background:#070707; color:#fff;" />
+          <input name="photoCaption" type="text" placeholder="Pie de foto (opcional)" style="flex:1; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.08); background:#070707; color:#fff;" />
+          <button type="button" class="upload-btn" data-action="upload-url">Subir URL</button>
+        </div>
+      </div>
+
+      <div class="member-modal__actions">
+        <button type="button" class="member-modal__cancel">Cerrar</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  const closeModal = () => modal.remove();
+
+  modal.querySelector(".member-modal__close")?.addEventListener("click", closeModal);
+  modal.querySelector(".member-modal__cancel")?.addEventListener("click", closeModal);
+  modal.addEventListener("click", (ev) => { if (ev.target === modal) closeModal(); });
+
+  const galleryEl = modal.querySelector('[data-gallery]');
+  const mainImg = modal.querySelector('[data-gallery-main-img]');
+  const urlInput = modal.querySelector("[name='photoUrl']");
+  const captionInput = modal.querySelector("[name='photoCaption']");
+  const uploadUrlBtn = modal.querySelector('[data-action="upload-url"]');
+  const prevBtn = modal.querySelector('[data-gallery-prev]');
+  const nextBtn = modal.querySelector('[data-gallery-next]');
+
+  let activeIndex = 0;
+
+  function renderThumbs() {
+    galleryEl.innerHTML = "";
+
+    if (!photos.length) {
+      galleryEl.appendChild(createEmptyState('No hay fotos para este sujeto.'));
+      mainImg.src = member.photo || 'assets/images/miembros/default.png';
+      return;
+    }
+
+    // ensure main image shows the favorite photo when present
+    const fav = photos.find(p => p.favorite);
+    if (fav) activeIndex = photos.findIndex(p => p.url === fav.url);
+    if (typeof activeIndex !== 'number' || activeIndex < 0) activeIndex = 0;
+
+    photos.forEach((photo, idx) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'photo-thumb';
+      btn.style.position = 'relative';
+      btn.innerHTML = `
+        <img src="${escapeAttribute(photo.url || '')}" alt="${escapeAttribute(photo.caption || '')}" />
+      `;
+
+      const favBtn = document.createElement('button');
+      favBtn.type = 'button';
+      favBtn.className = 'photo-fav-btn';
+      favBtn.textContent = photo.favorite ? '★' : '☆';
+      favBtn.title = photo.favorite ? 'Favorita' : 'Marcar como favorita';
+      if (photo.favorite) favBtn.classList.add('is-favorite');
+
+      favBtn.addEventListener('click', async (ev) => {
+        ev.stopPropagation();
+        try {
+          await setFavoritePhotoForMember(org, member, photo, membersGrid, memberIndex);
+          // update local photos
+          photos.forEach(p => p.favorite = p.url === photo.url);
+          activeIndex = photos.findIndex(p => p.url === photo.url);
+          renderThumbs();
+        } catch (err) {
+          console.error(err);
+          setStatus('No se pudo marcar la foto como favorita.', 'is-error');
+        }
+      });
+
+      btn.addEventListener('click', () => {
+        activeIndex = idx;
+        mainImg.src = photo.url || '';
+        // update active class
+        galleryEl.querySelectorAll('.photo-thumb').forEach((t, ti) => t.classList.toggle('is-active', ti === activeIndex));
+      });
+
+      // set is-active class if matches activeIndex
+      if (idx === activeIndex) btn.classList.add('is-active');
+
+      btn.appendChild(favBtn);
+      galleryEl.appendChild(btn);
+    });
+    // set main image to activeIndex
+    mainImg.src = photos[activeIndex]?.url || member.photo || 'assets/images/miembros/default.png';
+
+    // bind prev/next
+    prevBtn?.addEventListener('click', () => {
+      if (!photos.length) return;
+      activeIndex = (activeIndex - 1 + photos.length) % photos.length;
+      mainImg.src = photos[activeIndex].url;
+      galleryEl.querySelectorAll('.photo-thumb').forEach((t, ti) => t.classList.toggle('is-active', ti === activeIndex));
+      // scroll thumb into view
+      galleryEl.querySelectorAll('.photo-thumb')[activeIndex]?.scrollIntoView({behavior:'smooth', block:'nearest', inline:'center'});
+    });
+
+    nextBtn?.addEventListener('click', () => {
+      if (!photos.length) return;
+      activeIndex = (activeIndex + 1) % photos.length;
+      mainImg.src = photos[activeIndex].url;
+      galleryEl.querySelectorAll('.photo-thumb').forEach((t, ti) => t.classList.toggle('is-active', ti === activeIndex));
+      galleryEl.querySelectorAll('.photo-thumb')[activeIndex]?.scrollIntoView({behavior:'smooth', block:'nearest', inline:'center'});
+    });
+  }
+
+  uploadUrlBtn?.addEventListener('click', async () => {
+    const url = (urlInput.value || '').trim();
+    const caption = (captionInput.value || '').trim();
+    if (!url) return setStatus('Introduce una URL válida.', 'is-error');
+
+    uploadUrlBtn.disabled = true;
+    uploadUrlBtn.textContent = 'Subiendo...';
+
+    try {
+      const newPhoto = {
+        url,
+        caption,
+        uploadedAt: new Date().toISOString(),
+        uploadedBy: auth.currentUser?.email || 'usuario'
+      };
+
+      await addPhotoUrlForMember(org, member, newPhoto, membersGrid);
+
+      // reflect locally
+      photos.unshift(newPhoto);
+      urlInput.value = '';
+      captionInput.value = '';
+      renderThumbs();
+      setStatus('Foto añadida correctamente.', 'is-success');
+    } catch (err) {
+      console.error(err);
+      setStatus('No se pudo añadir la foto.', 'is-error');
+    } finally {
+      uploadUrlBtn.disabled = false;
+      uploadUrlBtn.textContent = 'Subir URL';
+    }
+  });
+
+  renderThumbs();
+}
+
+async function addPhotoUrlForMember(org, member, photoObject, membersGrid) {
+  try {
+    // remove old member object and add updated one with new photos array
+    const original = member;
+    const currentPhotos = Array.isArray(member.photos) ? [...member.photos] : [];
+
+    // avoid duplicate URLs
+    const exists = currentPhotos.find(p => p.url === photoObject.url);
+    const newPhotos = exists ? currentPhotos : [{ ...photoObject, favorite: false }, ...currentPhotos];
+
+    const updatedMember = { ...member, photos: newPhotos };
+
+    await updateDoc(doc(db, 'criminalOrganizations', org.id), { members: arrayRemove(original) });
+    await updateDoc(doc(db, 'criminalOrganizations', org.id), { members: arrayUnion(updatedMember) });
+  } catch (err) {
+    throw err;
+  }
+}
+
+async function setFavoritePhotoForMember(org, member, photo, membersGrid, memberIndex = null) {
+  try {
+    const original = member;
+    let currentPhotos = Array.isArray(member.photos) ? member.photos.map(p => ({ ...p })) : [];
+
+    // If the selected photo is not in the photos array, add it
+    if (!currentPhotos.find(p => p.url === photo.url)) {
+      currentPhotos.unshift({ ...photo, favorite: true });
+    }
+
+    currentPhotos = currentPhotos.map(p => ({ ...p, favorite: p.url === photo.url }));
+
+    const updatedMember = { ...member, photos: currentPhotos, photo: photo.url };
+
+    await updateDoc(doc(db, 'criminalOrganizations', org.id), { members: arrayRemove(original) });
+    await updateDoc(doc(db, 'criminalOrganizations', org.id), { members: arrayUnion(updatedMember) });
+    // Optimistically update the member card image in the DOM that opened the modal
+    try {
+      if (membersGrid && typeof memberIndex === 'number') {
+        const card = membersGrid.querySelector(`.member-card[data-member-index="${memberIndex}"]`);
+        if (card) {
+          const img = card.querySelector('.member-card__photo img');
+          if (img) img.src = photo.url;
+        }
+      }
+    } catch (err) {
+      // non-fatal DOM update
+      console.warn('No se pudo actualizar la tarjeta del miembro en el DOM:', err);
+    }
+  } catch (err) {
+    throw err;
+  }
 }
 
 async function deleteMember(org, member) {
