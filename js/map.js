@@ -105,7 +105,7 @@ let draftPoints = [];
 
 let selectedOrganizationId = null;
 let currentAddMode = null;
-//let currentSpecialMode = null;
+let currentSpecialMode = null;
 //let specialPoints = [];
 //let unsubscribeSpecialPoints = null;
 let unsubscribeOrganizations = null;
@@ -209,14 +209,9 @@ function switchBaseMap(style) {
   currentMapStyle = style;
   updateMapStyleButtons();
 
-  organizationsLayer.bringToFront();
-  draftLayer.bringToFront();
-  graffitiLayer.bringToFront();
-  plantationsLayer.bringToFront();
-  poisLayer.bringToFront();
-  storageLayer.bringToFront();
-  salesLayer.bringToFront();
-  //specialPointsLayer.bringToFront();
+  if (typeof currentBaseOverlay.bringToBack === "function") {
+    currentBaseOverlay.bringToBack();
+  }
 }
 
 function resetMapView() {
